@@ -5,6 +5,11 @@
 
 using namespace Rcpp;
 
+#ifdef RCPP_USE_GLOBAL_ROSTREAM
+Rcpp::Rostream<true>&  Rcpp::Rcout = Rcpp::Rcpp_cout_get();
+Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
+#endif
+
 // compute_cluster_coef_r
 SEXP compute_cluster_coef_r(int family, int nb_coef, double theta, double diffMax_NR, SEXP r_mu, SEXP r_lhs, SEXP r_sum_y, SEXP r_dum, SEXP r_obsCluster, SEXP r_table, SEXP r_cumtable, int nthreads);
 RcppExport SEXP _fixest_compute_cluster_coef_r(SEXP familySEXP, SEXP nb_coefSEXP, SEXP thetaSEXP, SEXP diffMax_NRSEXP, SEXP r_muSEXP, SEXP r_lhsSEXP, SEXP r_sum_ySEXP, SEXP r_dumSEXP, SEXP r_obsClusterSEXP, SEXP r_tableSEXP, SEXP r_cumtableSEXP, SEXP nthreadsSEXP) {
@@ -341,6 +346,52 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< SEXP >::type x(xSEXP);
     Rcpp::traits::input_parameter< int >::type nthreads(nthreadsSEXP);
     rcpp_result_gen = Rcpp::wrap(cpp_which_na_inf(x, nthreads));
+    return rcpp_result_gen;
+END_RCPP
+}
+// cpp_dsb
+List cpp_dsb(SEXP Rstr);
+RcppExport SEXP _fixest_cpp_dsb(SEXP RstrSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type Rstr(RstrSEXP);
+    rcpp_result_gen = Rcpp::wrap(cpp_dsb(Rstr));
+    return rcpp_result_gen;
+END_RCPP
+}
+// cpp_dsb_full_string
+List cpp_dsb_full_string(SEXP Rstr);
+RcppExport SEXP _fixest_cpp_dsb_full_string(SEXP RstrSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type Rstr(RstrSEXP);
+    rcpp_result_gen = Rcpp::wrap(cpp_dsb_full_string(Rstr));
+    return rcpp_result_gen;
+END_RCPP
+}
+// cpp_dsb_if_extract
+List cpp_dsb_if_extract(SEXP Rstr);
+RcppExport SEXP _fixest_cpp_dsb_if_extract(SEXP RstrSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type Rstr(RstrSEXP);
+    rcpp_result_gen = Rcpp::wrap(cpp_dsb_if_extract(Rstr));
+    return rcpp_result_gen;
+END_RCPP
+}
+// cpp_paste_conditional
+StringVector cpp_paste_conditional(StringVector x, IntegerVector id, int n);
+RcppExport SEXP _fixest_cpp_paste_conditional(SEXP xSEXP, SEXP idSEXP, SEXP nSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< StringVector >::type x(xSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type id(idSEXP);
+    Rcpp::traits::input_parameter< int >::type n(nSEXP);
+    rcpp_result_gen = Rcpp::wrap(cpp_paste_conditional(x, id, n));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -692,6 +743,77 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// cpp_find_never_always_treated
+List cpp_find_never_always_treated(IntegerVector cohort, NumericVector period);
+RcppExport SEXP _fixest_cpp_find_never_always_treated(SEXP cohortSEXP, SEXP periodSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< IntegerVector >::type cohort(cohortSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type period(periodSEXP);
+    rcpp_result_gen = Rcpp::wrap(cpp_find_never_always_treated(cohort, period));
+    return rcpp_result_gen;
+END_RCPP
+}
+// cpp_get_first_item
+IntegerVector cpp_get_first_item(IntegerVector x, int n_items);
+RcppExport SEXP _fixest_cpp_get_first_item(SEXP xSEXP, SEXP n_itemsSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< IntegerVector >::type x(xSEXP);
+    Rcpp::traits::input_parameter< int >::type n_items(n_itemsSEXP);
+    rcpp_result_gen = Rcpp::wrap(cpp_get_first_item(x, n_items));
+    return rcpp_result_gen;
+END_RCPP
+}
+// cpp_combine_clusters
+IntegerVector cpp_combine_clusters(SEXP cluster_list, IntegerVector index);
+RcppExport SEXP _fixest_cpp_combine_clusters(SEXP cluster_listSEXP, SEXP indexSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type cluster_list(cluster_listSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type index(indexSEXP);
+    rcpp_result_gen = Rcpp::wrap(cpp_combine_clusters(cluster_list, index));
+    return rcpp_result_gen;
+END_RCPP
+}
+// cpp_cut
+List cpp_cut(NumericVector x_sorted, NumericVector cut_points, IntegerVector is_included);
+RcppExport SEXP _fixest_cpp_cut(SEXP x_sortedSEXP, SEXP cut_pointsSEXP, SEXP is_includedSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< NumericVector >::type x_sorted(x_sortedSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type cut_points(cut_pointsSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type is_included(is_includedSEXP);
+    rcpp_result_gen = Rcpp::wrap(cpp_cut(x_sorted, cut_points, is_included));
+    return rcpp_result_gen;
+END_RCPP
+}
+// cpp_is_int
+bool cpp_is_int(SEXP x);
+RcppExport SEXP _fixest_cpp_is_int(SEXP xSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type x(xSEXP);
+    rcpp_result_gen = Rcpp::wrap(cpp_is_int(x));
+    return rcpp_result_gen;
+END_RCPP
+}
+// cpp_hash_string
+double cpp_hash_string(std::string x);
+RcppExport SEXP _fixest_cpp_hash_string(SEXP xSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< std::string >::type x(xSEXP);
+    rcpp_result_gen = Rcpp::wrap(cpp_hash_string(x));
+    return rcpp_result_gen;
+END_RCPP
+}
 // cpp_get_nb_threads
 int cpp_get_nb_threads();
 RcppExport SEXP _fixest_cpp_get_nb_threads() {
@@ -983,6 +1105,78 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// cpp_colon_to_star
+StringVector cpp_colon_to_star(SEXP Rstr);
+RcppExport SEXP _fixest_cpp_colon_to_star(SEXP RstrSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type Rstr(RstrSEXP);
+    rcpp_result_gen = Rcpp::wrap(cpp_colon_to_star(Rstr));
+    return rcpp_result_gen;
+END_RCPP
+}
+// cpp_newey_west
+NumericMatrix cpp_newey_west(NumericMatrix S, NumericVector w, int nthreads);
+RcppExport SEXP _fixest_cpp_newey_west(SEXP SSEXP, SEXP wSEXP, SEXP nthreadsSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< NumericMatrix >::type S(SSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type w(wSEXP);
+    Rcpp::traits::input_parameter< int >::type nthreads(nthreadsSEXP);
+    rcpp_result_gen = Rcpp::wrap(cpp_newey_west(S, w, nthreads));
+    return rcpp_result_gen;
+END_RCPP
+}
+// cpp_newey_west_panel
+NumericMatrix cpp_newey_west_panel(NumericMatrix S, NumericVector w, IntegerVector unit, int G, IntegerVector time, int T, int nthreads);
+RcppExport SEXP _fixest_cpp_newey_west_panel(SEXP SSEXP, SEXP wSEXP, SEXP unitSEXP, SEXP GSEXP, SEXP timeSEXP, SEXP TSEXP, SEXP nthreadsSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< NumericMatrix >::type S(SSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type w(wSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type unit(unitSEXP);
+    Rcpp::traits::input_parameter< int >::type G(GSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type time(timeSEXP);
+    Rcpp::traits::input_parameter< int >::type T(TSEXP);
+    Rcpp::traits::input_parameter< int >::type nthreads(nthreadsSEXP);
+    rcpp_result_gen = Rcpp::wrap(cpp_newey_west_panel(S, w, unit, G, time, T, nthreads));
+    return rcpp_result_gen;
+END_RCPP
+}
+// cpp_driscoll_kraay
+NumericMatrix cpp_driscoll_kraay(NumericMatrix S, NumericVector w, IntegerVector time, int T, int nthreads);
+RcppExport SEXP _fixest_cpp_driscoll_kraay(SEXP SSEXP, SEXP wSEXP, SEXP timeSEXP, SEXP TSEXP, SEXP nthreadsSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< NumericMatrix >::type S(SSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type w(wSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type time(timeSEXP);
+    Rcpp::traits::input_parameter< int >::type T(TSEXP);
+    Rcpp::traits::input_parameter< int >::type nthreads(nthreadsSEXP);
+    rcpp_result_gen = Rcpp::wrap(cpp_driscoll_kraay(S, w, time, T, nthreads));
+    return rcpp_result_gen;
+END_RCPP
+}
+// cpp_vcov_conley
+NumericMatrix cpp_vcov_conley(NumericMatrix S, NumericVector lon_rad, NumericVector lat_rad, const int distance, const double cutoff, int nthreads);
+RcppExport SEXP _fixest_cpp_vcov_conley(SEXP SSEXP, SEXP lon_radSEXP, SEXP lat_radSEXP, SEXP distanceSEXP, SEXP cutoffSEXP, SEXP nthreadsSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< NumericMatrix >::type S(SSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type lon_rad(lon_radSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type lat_rad(lat_radSEXP);
+    Rcpp::traits::input_parameter< const int >::type distance(distanceSEXP);
+    Rcpp::traits::input_parameter< const double >::type cutoff(cutoffSEXP);
+    Rcpp::traits::input_parameter< int >::type nthreads(nthreadsSEXP);
+    rcpp_result_gen = Rcpp::wrap(cpp_vcov_conley(S, lon_rad, lat_rad, distance, cutoff, nthreads));
+    return rcpp_result_gen;
+END_RCPP
+}
 
 static const R_CallMethodDef CallEntries[] = {
     {"_fixest_compute_cluster_coef_r", (DL_FUNC) &_fixest_compute_cluster_coef_r, 12},
@@ -1002,6 +1196,10 @@ static const R_CallMethodDef CallEntries[] = {
     {"_fixest_update_deriv_single", (DL_FUNC) &_fixest_update_deriv_single, 5},
     {"_fixest_cpp_demean", (DL_FUNC) &_fixest_cpp_demean, 13},
     {"_fixest_cpp_which_na_inf", (DL_FUNC) &_fixest_cpp_which_na_inf, 2},
+    {"_fixest_cpp_dsb", (DL_FUNC) &_fixest_cpp_dsb, 1},
+    {"_fixest_cpp_dsb_full_string", (DL_FUNC) &_fixest_cpp_dsb_full_string, 1},
+    {"_fixest_cpp_dsb_if_extract", (DL_FUNC) &_fixest_cpp_dsb_if_extract, 1},
+    {"_fixest_cpp_paste_conditional", (DL_FUNC) &_fixest_cpp_paste_conditional, 3},
     {"_fixest_cpp_cholesky", (DL_FUNC) &_fixest_cpp_cholesky, 3},
     {"_fixest_cpp_sparse_products", (DL_FUNC) &_fixest_cpp_sparse_products, 5},
     {"_fixest_cpppar_crossprod", (DL_FUNC) &_fixest_cpppar_crossprod, 3},
@@ -1028,6 +1226,12 @@ static const R_CallMethodDef CallEntries[] = {
     {"_fixest_cpp_diag_XUtX", (DL_FUNC) &_fixest_cpp_diag_XUtX, 2},
     {"_fixest_cpp_factor_matrix", (DL_FUNC) &_fixest_cpp_factor_matrix, 5},
     {"_fixest_cpp_add_commas", (DL_FUNC) &_fixest_cpp_add_commas, 3},
+    {"_fixest_cpp_find_never_always_treated", (DL_FUNC) &_fixest_cpp_find_never_always_treated, 2},
+    {"_fixest_cpp_get_first_item", (DL_FUNC) &_fixest_cpp_get_first_item, 2},
+    {"_fixest_cpp_combine_clusters", (DL_FUNC) &_fixest_cpp_combine_clusters, 2},
+    {"_fixest_cpp_cut", (DL_FUNC) &_fixest_cpp_cut, 3},
+    {"_fixest_cpp_is_int", (DL_FUNC) &_fixest_cpp_is_int, 1},
+    {"_fixest_cpp_hash_string", (DL_FUNC) &_fixest_cpp_hash_string, 1},
     {"_fixest_cpp_get_nb_threads", (DL_FUNC) &_fixest_cpp_get_nb_threads, 0},
     {"_fixest_cpppar_exp", (DL_FUNC) &_fixest_cpppar_exp, 2},
     {"_fixest_cpppar_log", (DL_FUNC) &_fixest_cpppar_log, 2},
@@ -1051,6 +1255,11 @@ static const R_CallMethodDef CallEntries[] = {
     {"_fixest_cpppar_check_only_0", (DL_FUNC) &_fixest_cpppar_check_only_0, 2},
     {"_fixest_cpp_quf_gnl", (DL_FUNC) &_fixest_cpp_quf_gnl, 1},
     {"_fixest_cpppar_quf_table_sum", (DL_FUNC) &_fixest_cpppar_quf_table_sum, 11},
+    {"_fixest_cpp_colon_to_star", (DL_FUNC) &_fixest_cpp_colon_to_star, 1},
+    {"_fixest_cpp_newey_west", (DL_FUNC) &_fixest_cpp_newey_west, 3},
+    {"_fixest_cpp_newey_west_panel", (DL_FUNC) &_fixest_cpp_newey_west_panel, 7},
+    {"_fixest_cpp_driscoll_kraay", (DL_FUNC) &_fixest_cpp_driscoll_kraay, 5},
+    {"_fixest_cpp_vcov_conley", (DL_FUNC) &_fixest_cpp_vcov_conley, 6},
     {NULL, NULL, 0}
 };
 

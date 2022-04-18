@@ -95,7 +95,7 @@ setup_multi = function(index, all_names, data, simplify = TRUE){
 #' @inherit print.fixest_multi seealso
 #'
 #' @param object A \code{fixest_multi} object, obtained from a \code{fixest} estimation leading to multiple results.
-#' @param type A character either equal to \code{"short"}, \code{"long"}, \code{"compact"}, or \code{"se_compact"}. If \code{short}, only the table of coefficients is displayed for each estimation. If \code{long}, then the full results are displayed for each estimation. If \code{compact}, a \code{data.frame} is returned with one line per model and the formatted coefficients + standard-errors in the columns. If \code{se_compact}, a \code{data.frame} is returned with one line per model, one numeric column for each coefficient and one numeric column for each standard-error.
+#' @param type A character either equal to \code{"short"}, \code{"long"}, \code{"compact"}, \code{"se_compact"} or \code{"se_long"}. If \code{short}, only the table of coefficients is displayed for each estimation. If \code{long}, then the full results are displayed for each estimation. If \code{compact}, a \code{data.frame} is returned with one line per model and the formatted coefficients + standard-errors in the columns. If \code{se_compact}, a \code{data.frame} is returned with one line per model, one numeric column for each coefficient and one numeric column for each standard-error. If \code{"se_long"}, same as \code{"se_compact"} but the data is in a long format instead of wide.
 #' @param ... Not currently used.
 #'
 #' @return
@@ -110,8 +110,8 @@ setup_multi = function(index, all_names, data, simplify = TRUE){
 #' res = feols(y ~ csw(x1, x2, x3), base, split = ~species)
 #'
 #' # By default, the type is "short"
-#' # You can stil use the arguments from summary.fixest
-#' summary(res, cluster = ~ species)
+#' # You can still use the arguments from summary.fixest
+#' summary(res, se = "hetero")
 #'
 #' summary(res, type = "long")
 #'
@@ -119,22 +119,31 @@ setup_multi = function(index, all_names, data, simplify = TRUE){
 #'
 #' summary(res, type = "se_compact")
 #'
+#' summary(res, type = "se_long")
 #'
-summary.fixest_multi = function(object, type = "short", se = NULL, cluster = NULL, dof = NULL, .vcov, stage = 2, lean = FALSE, n, ...){
+#'
+summary.fixest_multi = function(object, type = "short", vcov = NULL, se = NULL, cluster = NULL, ssc = NULL,
+                                .vcov = NULL, stage = 2, lean = FALSE, n = 1000, ...){
     dots = list(...)
     data = attr(object, "data")
 
-    check_arg_plus(type, "match(short, long, compact, se_compact)")
+    check_arg_plus(type, "match(short, long, compact, se_compact, se_long)")
 
     if(!missing(type) || is.null(attr(object, "print_request"))){
         attr(object, "print_request") = type
+    }
+
+    if(is_user_level_call()){
+        validate_dots(suggest_args = c("type", "vcov"),
+                      valid_args = c("agg", "forceCovariance", "keepBounded", "nthreads"))
     }
 
     est_1 = data[[1]]
     if(is.null(est_1$cov.scaled) || !isTRUE(dots$fromPrint)){
 
         for(i in 1:length(data)){
-            data[[i]] = summary(data[[i]], se = se, cluster = cluster, dof = dof, .vcov = .vcov, stage = stage, lean = lean, n = n, ...)
+            data[[i]] = summary(data[[i]], vcov = vcov, se = se, cluster = cluster, ssc = ssc,
+                                .vcov = .vcov, stage = stage, lean = lean, n = n, ...)
         }
 
         # In IV: multiple estimations can be returned
@@ -149,7 +158,7 @@ summary.fixest_multi = function(object, type = "short", se = NULL, cluster = NUL
 
     }
 
-    if(type %in% c("compact", "se_compact")){
+    if(type %in% c("compact", "se_compact", "se_long")){
         meta = attr(object, "meta")
         data = attr(object, "data")
 
@@ -166,10 +175,17 @@ summary.fixest_multi = function(object, type = "short", se = NULL, cluster = NUL
         if(!"lhs" %in% names(index)){
             res$lhs = sapply(data, function(x) as.character(x$fml[[2]]))
         }
+
         for(my_dim in names(index)){
             res[[my_dim]] = sfill(as.character(factor(tree[[my_dim]], labels = all_names[[my_dim]])), right = TRUE)
         }
         res$i = NULL
+
+        if(type == "se_long"){
+            res$type = "coef"
+        }
+
+        n_start = ncol(res)
 
         signifCode = c("***"=0.001, "**"=0.01, "*"=0.05, "."=0.1)
 
@@ -185,7 +201,7 @@ summary.fixest_multi = function(object, type = "short", se = NULL, cluster = NUL
                 value = paste0(signif_plus(ct[, 1], 3), stars, " (", signif_plus(ct[, 2], 3), ")")
                 names(value) = vname
 
-            } else if(type == "se_compact"){
+            } else if(type %in% c("se_compact", "se_long")){
                 n = length(vname)
                 vname_tmp = character(2 * n)
                 qui_coef = seq(1, by = 2, length.out = n)
@@ -220,6 +236,20 @@ summary.fixest_multi = function(object, type = "short", se = NULL, cluster = NUL
             }
         }
 
+        if(type == "se_long"){
+            # clumsy... but works
+            who_se = which(grepl("__se", names(res)))
+            se_all = res[, c(1:n_start, who_se)]
+            se_all$type = "se"
+            names(se_all) = gsub("__se$", "", names(se_all))
+            coef_all = res[, -who_se]
+
+            quoi = rbind(coef_all, se_all)
+            n = nrow(coef_all)
+            res = quoi[rep(1:n, each = 2) + rep(c(0, n), n), ]
+            row.names(res) = NULL
+        }
+
         return(res)
     }
 
@@ -252,6 +282,10 @@ summary.fixest_multi = function(object, type = "short", se = NULL, cluster = NUL
 #'
 print.fixest_multi = function(x, ...){
 
+    if(is_user_level_call()){
+        validate_dots(valid_args = dsb("/type, vcov, se, cluster, ssc, stage, lean, agg, forceCovariance, keepBounded, n, nthreads"))
+    }
+
     x = summary(x, fromPrint = TRUE, ...)
 
     # Type = compact
@@ -274,7 +308,7 @@ print.fixest_multi = function(x, ...){
         all_se = unique(unlist(sapply(data, function(x) attr(x$cov.scaled, "type"))))
 
         if(length(all_se) > 1){
-            cat("Standard-errors: mixed (use summary() with arg. 'se' or 'cluster' to harmonize them) \n")
+            cat("Standard-errors: mixed (use summary() with arg. 'vcov' to harmonize them) \n")
         } else if(length(all_se) == 1){
             cat("Standard-errors:", all_se, "\n")
         }
@@ -314,7 +348,7 @@ print.fixest_multi = function(x, ...){
             if(isTRUE(data[[i]]$onlyFixef)){
                 cat("No variable (only the fixed-effects).\n")
             } else {
-                myPrintCoefTable(coeftable = coeftable(data[[i]]), show_signif = FALSE)
+                print_coeftable(coeftable = coeftable(data[[i]]), show_signif = FALSE)
             }
             if(tree[i, depth] != index[[depth]]) cat("---\n")
         } else {
@@ -715,12 +749,126 @@ set_index_multi = function(x, vmax, all_names){
 
 
 
+#' Extracts the coefficients of fixest_multi objects
+#'
+#' Utility to extract the coefficients of multiple estimations and rearrange them into a matrix.
+#'
+#' @inheritParams etable
+#'
+#' @param object A \code{fixest_multi} object. Obtained from a multiple estimation.
+#' @param ... Not currently used.
+#'
+#'
+#' @examples
+#'
+#' base = iris
+#' names(base) = c("y", "x1", "x2", "x3", "species")
+#'
+#' # A multiple estimation
+#' est = feols(y ~ x1 + csw0(x2, x3), base)
+#'
+#' # Getting all the coefficients at once,
+#' # each row is a model
+#' coef(est)
+#'
+#' # Example of keep/drop/order
+#' coef(est, keep = "Int|x1", order = "x1")
+#'
+#'
+#' # To change the order of the model, use fixest_multi
+#' # extraction tools:
+#' coef(est[rhs = .N:1])
+#'
+#'
+coef.fixest_multi = function(object, keep, drop, order, ...){
+    # row: model
+    # col: coefficient
+
+    check_arg(keep, drop, order, "NULL character vector no na")
+
+    data = attr(object, "data")
+
+    res_list = list()
+    for(i in seq_along(data)){
+        res_list[[i]] = coef(data[[i]])
+    }
+
+    all_names = unique(unlist(lapply(res_list, names)))
+
+    if(!missnull(keep)) all_names = keep_apply(all_names, keep)
+    if(!missnull(drop)) all_names = drop_apply(all_names, drop)
+    if(!missnull(order)) all_names = order_apply(all_names, order)
+
+    if(length(all_names) == 0) return(NULL)
+
+    nr = length(res_list)
+    nc = length(all_names)
+
+    res_list = lapply(res_list, function(x) x[all_names])
+    res = do.call(rbind, res_list)
+    colnames(res) = all_names
+
+    res
+}
+
+#' @rdname coef.fixest_multi
+coefficients.fixest_multi <- coef.fixest_multi
 
 
+#' Extracts the residuals from a \code{fixest_multi} object
+#'
+#' Utility to extract the residuals from multiple \code{fixest} estimations. If possible, all the residuals are coerced into
+#'
+#' @inheritParams resid.fixest
+#'
+#' @param object A \code{fixes_multi} object.
+#' @param na.rm Logical, default is \code{FALSE}. Should the NAs be kept? If \code{TRUE}, they are removed.
+#'
+#' @return
+#' If all the models return residuals of the same length, a matrix is returned. Otherwise, a \code{data.frame} is returned.
+#'
+#' @examples
+#'
+#' base = iris
+#' names(base) = c("y", "x1", "x2", "x3", "species")
+#'
+#' # A multiple estimation
+#' est = feols(y ~ x1 + csw0(x2, x3), base)
+#'
+#' # We can get all the residuals at once,
+#' # each column is a model
+#' head(resid(est))
+#'
+#' # We can select/order the model using fixest_multi extraction
+#' head(resid(est[rhs = .N:1]))
+#'
+resid.fixest_multi = function(object, type = c("response", "deviance", "pearson", "working"), na.rm = FALSE, ...){
+
+    # Je fais un prototype pour le moment, je l'ameliorerai apres (07-04-2021)
+
+    check_arg_plus(type, "match")
+    check_arg_plus(na.rm, "logical scalar")
+
+    data = attr(object, "data")
+
+    res_list = list()
+    for(i in seq_along(data)){
+        res_list[[i]] = resid(data[[i]], type = type, na.rm = na.rm)
+    }
+
+    n_all = sapply(res_list, length)
+
+    if(all(n_all == n_all[1])){
+        res = do.call(cbind, res_list)
+    } else {
+        res = res_list
+    }
+
+    res
+}
 
 
-
-
-
+#' @rdname resid.fixest_multi
+residuals.fixest_multi <- resid.fixest_multi
 
 

@@ -30,7 +30,7 @@
  *  new values.                                                       *
  *  Finally for string vectors, I use R's feature of stocking         *
  *  character strings in a unique location. They are therefore        *
- *  uniquely identified by their pointer. I then tranform the         *
+ *  uniquely identified by their pointer. I then transform the        *
  *  pointer to int, and sort accordingly.                             *
  *                                                                    *
  *  The sorting, when sorting is required, is radix-based. My code    *
@@ -41,7 +41,7 @@
  *                                                                    *
  *  As said before, all that matters for qufing is that identical     *
  *  values are consecutive after the sort. Thus, the endianness of    *
- *  the system is of no importantce: whatever the order of bytes      *
+ *  the system is of no importance: whatever the order of bytes       *
  *  on which we sort, we obtain what we want.                         *
  *                                                                    *
  *                                                                    *
@@ -602,7 +602,7 @@ void quf_refactor(int *px_in, int x_size, IntegerVector &obs2keep, int n, int *x
 void quf_table_sum_single(void *px_in, std::string &x_type, int n, int q, int *x_quf,
                           vector<double> &x_unik, vector<int> &x_table, double *py,
                           vector<double> &sum_y, bool do_sum_y, bool rm_0, bool rm_1,
-                          bool rm_single, vector<bool> &any_pblm, vector<bool> &id_pblm,
+                          bool rm_single, vector<int> &any_pblm, vector<bool> &id_pblm,
                           bool check_pblm, bool do_refactor, int x_size, IntegerVector &obs2keep){
 
     // check_pblm => FALSE only if only_slope = TRUE
@@ -665,7 +665,7 @@ void quf_table_sum_single(void *px_in, std::string &x_type, int n, int q, int *x
         int d_end = 0;
         for(int d=0 ; d<D ; ++d){
             if((rm_0 && sum_y[d] == 0) || (rm_1 && sum_y[d] == x_table[d]) || (rm_single && x_table[d] == 1)){
-                any_pblm[q] = true;
+                any_pblm[q] = 1;
                 d_end = d;
                 break;
             }
@@ -699,7 +699,8 @@ void quf_table_sum_single(void *px_in, std::string &x_type, int n, int q, int *x
 void quf_refactor_table_sum_single(int n, int *quf_old, int *quf_new, vector<bool> &obs_removed,
                                    vector<double> &x_unik, vector<double> &x_unik_new, vector<double> &x_removed,
                                    vector<int> &x_table, double *py, vector<double> &sum_y, bool do_sum_y,
-                                   bool rm_1, vector<bool> &id_pblm, bool check_pblm, bool *pstop_now){
+                                   bool rm_1, bool rm_single, vector<bool> &id_pblm, bool check_pblm,
+                                   bool *pstop_now, int n_FE){
     // takes in the old quf, the observations removed,
     // then recreates the vectors of:
     // quf, table, sum_y, x_unik_new
@@ -714,10 +715,21 @@ void quf_refactor_table_sum_single(int n, int *quf_old, int *quf_new, vector<boo
     // NOTA: I don't reiterate the observation removal => just one round
     //  (otherwise it could go several rounds => too time consuming, no big value added)
 
-    if((rm_1 || !check_pblm) && !*pstop_now){
+    // if n_FE = 1, no need to recheck the removal since by definition it can't be messed up
+    // by the other dimensions. Everything is done properly directly.
+
+    if((rm_single || rm_1 || !check_pblm) && !*pstop_now && n_FE > 1){
         // If we haven't excluded observations because of 0 only values (ie check_pblm == false)
         // then we here need to update id_pblm, because some IDs could have been taken
         // out due to other FEs being removed
+        // we also need to recheck when singletons are removed
+
+        // The fact that we don't need to recheck when removing only 0s is an oddity
+        // Indeed, when removing only 0s, the IDs of one dimension aren't messed up
+        // by the removal of observations from other dimensions because if they
+        // were to be removed because of this, this would mean that all values
+        // of this ID are 0, so they'd be removed anyway from their own dimension
+        // in the first place.
 
         // the new ID problem => what are the IDs that still exists?
         vector<bool> id_still_exists(D, false);
@@ -726,15 +738,19 @@ void quf_refactor_table_sum_single(int n, int *quf_old, int *quf_new, vector<boo
 
         // we recompute the table and sum_y
         std::fill(x_table.begin(), x_table.end(), 0);
-        std::fill(sum_y.begin(), sum_y.end(), 0);
+        // std::fill(sum_y.begin(), sum_y.end(), 0);
 
-        int id;
+        if(do_sum_y){
+            std::fill(sum_y.begin(), sum_y.end(), 0);
+        }
+
+        int id = 0;
         for(int i=0 ; i<n ; ++i){
             if(!obs_removed[i]){
                 id = quf_old[i] - 1;
                 if(!id_still_exists[id]) id_still_exists[id] = true;
                 ++x_table[id];
-                sum_y[id] += py[i];
+                if(do_sum_y) sum_y[id] += py[i];
             }
         }
 
@@ -744,9 +760,11 @@ void quf_refactor_table_sum_single(int n, int *quf_old, int *quf_new, vector<boo
 
         // Loop finding out the problems
         vector<bool> id_pblm_check(D, false);
-        for(int d=0 ; d<D ; ++d){
-            if(sum_y[d] == 0 || sum_y[d] == x_table[d]){
-                id_pblm_check[d] = true;
+        if(rm_1){
+            for(int d=0 ; d<D ; ++d){
+                if(sum_y[d] == 0 || sum_y[d] == x_table[d]){
+                    id_pblm_check[d] = true;
+                }
             }
         }
 
@@ -760,7 +778,7 @@ void quf_refactor_table_sum_single(int n, int *quf_old, int *quf_new, vector<boo
 
         // is there a problem?
         bool any_pblm = false;
-        // we check only if needed (if !rm_1 && length(id_pblm) == 0 => means no problem)
+        // we check only if needed (if !rm_single && !rm_1 && length(id_pblm) == 0 => means no problem)
         if(id_pblm.size() > 0){
             for(int d=0 ; d<D ; ++d){
                 if(id_pblm[d]){
@@ -792,6 +810,10 @@ void quf_refactor_table_sum_single(int n, int *quf_old, int *quf_new, vector<boo
         // New quf + table + sum_y
 
         int D_new = D - nb_pblm;
+
+        // Rcout << "D new: " << D_new << "\n";
+        // Rcout << "any_pblm: " << any_pblm << "\n";
+        // Rcout << "id_pblm size: " << id_pblm.size() << "\n";
 
         x_table.resize(D_new);
         std::fill(x_table.begin(), x_table.end(), 0);
@@ -897,7 +919,7 @@ List cpppar_quf_table_sum(SEXP x, SEXP y, bool do_sum_y, bool rm_0, bool rm_1,
 
     vector< vector<int> > x_table_all(Q);
     vector< vector<double> > x_unik_all(Q);
-    vector<bool> any_pblm(Q, false);
+    vector<int> any_pblm(Q, 0);
     vector< vector<bool> > id_pblm_all(Q);
     // The following may not be needed:
     vector< vector<double> > sum_y_all(Q);
@@ -949,8 +971,10 @@ List cpppar_quf_table_sum(SEXP x, SEXP y, bool do_sum_y, bool rm_0, bool rm_1,
 
     #pragma omp parallel for num_threads(nthreads)
     for(int q=0 ; q<Q ; ++q){
-        quf_table_sum_single(px_all[q], x_type_all[q], n, q, p_x_quf_all[q], x_unik_all[q], x_table_all[q],
-                             py, sum_y_all[q], do_sum_y, rm_0, rm_1, rm_single, any_pblm, id_pblm_all[q], check_pblm[q],
+        quf_table_sum_single(px_all[q], x_type_all[q], n, q, p_x_quf_all[q],
+                             x_unik_all[q], x_table_all[q],
+                             py, sum_y_all[q], do_sum_y, rm_0, rm_1,
+                             rm_single, any_pblm, id_pblm_all[q], check_pblm[q],
                              do_refactor, px_sizes[q], obs2keep);
     }
 
@@ -965,38 +989,78 @@ List cpppar_quf_table_sum(SEXP x, SEXP y, bool do_sum_y, bool rm_0, bool rm_1,
 
     // Rcout << "Any problem: " << is_pblm << "\n";
 
+
     if(obs2keep[0] != 0){
         n = n_keep;
     }
 
     if(is_pblm){
 
+        //
+        // finding which observation to remove based on the removed fixed-effects
+        //
+
+        // New scheme:
+        // - if parallel, we create an int vector gathering the obs removed
+        //   => this will allows to avoid a critical section which makes the
+        //      parallel useless
+        //   we then copy the values into the bool vector
+        // - if not parallel, we fill the bool vector directly
+        //
+
+        int n_problems = std::accumulate(any_pblm.begin(), any_pblm.end(), 0);
+        bool is_parallel = n_problems > 1 && nthreads > 1;
+
         // creating the obs2remove vector
         obs_removed.resize(n);
         std::fill(obs_removed.begin(), obs_removed.end(), false);
 
-        // No need to take care of race conditions
-        #pragma omp parallel for num_threads(nthreads)
-        for(int q=0 ; q<Q ; ++q){
-            // skipping loop if no problem
-            if(any_pblm[q]){
-                vector<bool> &id_pblm = id_pblm_all[q];
-                int *pquf = p_x_quf_all[q];
-                for(int i=0 ; i<n ; ++i){
-                    if(id_pblm[pquf[i] - 1]){
-                        obs_removed[i] = true;
+        if(is_parallel){
+
+            // using an int vector removes the race condition issue
+            // => we can't use a boolean vector directly bc of the way
+            // boolean vectors are stored (allocation of new values depends
+            // on the position of the existing values => creating a race condition
+            // problem)
+            //
+            // using a omp critical section is a no go, renders parallel useless
+            vector<int> obs_removed_int(n, 0);
+
+            #pragma omp parallel for num_threads(nthreads)
+            for(int q=0 ; q<Q ; ++q){
+                if(any_pblm[q]){
+                    vector<bool> &id_pblm = id_pblm_all[q];
+                    int *pquf = p_x_quf_all[q];
+                    for(int i=0 ; i<n ; ++i){
+                        if(id_pblm[pquf[i] - 1]){
+                            obs_removed_int[i] = 1;
+                        }
+                    }
+                }
+            }
+
+            // we copy the values into the boolean vector
+            for(int i=0 ; i<n ; ++i){
+                if(obs_removed_int[i]){
+                    obs_removed[i] = true;
+                }
+            }
+
+        } else {
+
+            // we fill the boolean vector directly
+            for(int q=0 ; q<Q ; ++q){
+                if(any_pblm[q]){
+                    vector<bool> &id_pblm = id_pblm_all[q];
+                    int *pquf = p_x_quf_all[q];
+                    for(int i=0 ; i<n ; ++i){
+                        if(id_pblm[pquf[i] - 1]){
+                            obs_removed[i] = true;
+                        }
                     }
                 }
             }
         }
-
-        // int nb_rm = 0;
-        // for(int i=0 ; i<n ; ++i){
-        //     nb_rm += obs_removed[i];
-        // }
-        //
-        // Rcout << "#obs removed = " << nb_rm << "\n";
-        // stop("end after removing obs.");
 
 
         // refactoring, recomputing all the stuff
@@ -1025,8 +1089,9 @@ List cpppar_quf_table_sum(SEXP x, SEXP y, bool do_sum_y, bool rm_0, bool rm_1,
         for(int q=0 ; q<Q ; ++q){
             quf_refactor_table_sum_single(n, p_x_quf_all[q], p_x_new_quf_all[q], obs_removed,
                                           x_unik_all[q], x_new_unik_all[q], x_removed_all[q],
-                                        x_table_all[q], py, sum_y_all[q], do_sum_y,
-                                        rm_1, id_pblm_all[q], check_pblm[q], pstop_now);
+                                          x_table_all[q], py, sum_y_all[q], do_sum_y,
+                                          rm_1, rm_single, id_pblm_all[q], check_pblm[q],
+                                          pstop_now, Q);
         }
 
         if(*pstop_now){

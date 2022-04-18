@@ -10,11 +10,7 @@
  *   2) function to obtain the FE coefficients after the estimation is done        *
  *   3) functions to lag variables                                                 *
  *                                                                                 *
- * The algorithm to get the FE coefs is very fast and finds the number             *
- * of references with proba 1. I may write an article in "stg letters" some day to *
- * describe it (actually I should... God give me the time!).                       *
- *                                                                                 *
- * Otherwise, nothing much to say, everything is pretty explicit.                  *
+ * Nothing much to say, everything is pretty explicit.                             *
  *                                                                                 *
  **********************************************************************************/
 
@@ -24,6 +20,7 @@
 #include <vector>
 #include <stdio.h>
 #include <cmath>
+#include <functional>
 
 using namespace Rcpp;
 using namespace std;
@@ -1046,6 +1043,307 @@ std::string cpp_add_commas(double x, int r = 1, bool whole = true){
 
     return res;
 }
+
+
+// [[Rcpp::export]]
+List cpp_find_never_always_treated(IntegerVector cohort, NumericVector period){
+    // Note that both cohort and period are sorted according to cohort
+
+    IntegerVector always_treated;
+    // cohort_ref => the guys that will be out of the interaction
+    IntegerVector cohort_ref;
+
+    int n = cohort.size();
+
+    bool is_pos = false;
+    bool is_neg = false;
+    bool is_ok = false;
+
+    int j = cohort[0];
+    if(period[0] < 0){
+        is_neg = true;
+    } else {
+        is_pos = true;
+    }
+
+    for(int i=1 ; i<n ; ++i){
+
+        if(j == cohort[i]){
+            if(!is_ok){
+                // condition avoids checking period
+                // only worth for very (very) long vectors
+
+                if(period[i] < 0){
+                    is_neg = true;
+                    is_ok = is_pos;
+                } else {
+                    is_pos = true;
+                    is_ok = is_neg;
+                }
+            }
+        } else {
+            // we change IDs
+            if(!is_ok){
+                if(is_pos) always_treated.push_back(j);
+                cohort_ref.push_back(j);
+            }
+
+            // re-init
+            j = cohort[i];
+            is_neg = false;
+            is_pos = false;
+            is_ok = false;
+
+        }
+    }
+
+    // Last element
+    if(!is_ok){
+        if(is_pos) always_treated.push_back(j);
+        cohort_ref.push_back(j);
+    }
+
+    List res;
+    res["always_treated"] = always_treated;
+    res["ref"] = cohort_ref;
+
+    return res;
+}
+
+
+// [[Rcpp::export]]
+IntegerVector cpp_get_first_item(IntegerVector x, int n_items){
+    // observation id of the first occurrence
+    // x ranges from 1 to n_items
+    // we return indexes R style
+
+    int n = x.size();
+    IntegerVector res(n_items);
+
+    for(int i=0 ; i<n ; ++i){
+        if(res[x[i] - 1] == 0){
+            res[x[i] - 1] = i + 1;
+        }
+    }
+
+    return res;
+}
+
+
+// [[Rcpp::export]]
+IntegerVector cpp_combine_clusters(SEXP cluster_list, IntegerVector index){
+    // cluster: list of integer vectors, each ranging from 1 to the number of cases
+    // index: result of order() on the clusters
+
+    if(TYPEOF(cluster_list) != VECSXP){
+        stop("Internal error: Only lists are accepted!");
+    }
+
+    int Q = Rf_length(cluster_list);
+
+    int n = index.size();
+    IntegerVector res(n);
+
+    // Loading the data
+    vector<int*> pcluster(Q);
+    for(int q=0 ; q<Q ; ++q){
+        SEXP cluster_q = VECTOR_ELT(cluster_list, q);
+
+        pcluster[q] = INTEGER(cluster_q);
+    }
+
+    // the observation ID
+    int obs = index[0] - 1;
+
+    // vector holding the current value
+    vector<int> current_value(Q);
+
+    // initialization
+    int counter = 1;
+    res[obs] = counter;
+    for(int q=0 ; q<Q ; ++q){
+        current_value[q] = pcluster[q][obs];
+    }
+
+    // we loop on the vector and flag values that are different
+    int q = 0;
+    for(int i=1 ; i<n ; ++i){
+        obs = index[i] - 1;
+
+        for(q=0 ; q<Q ; ++q){
+            if(pcluster[q][obs] != current_value[q]){
+                break;
+            }
+        }
+
+        // if the condition holds => means the values are different
+        if(q < Q){
+            ++counter;
+            // we save the new values
+            for(; q<Q ; ++q){
+                current_value[q] = pcluster[q][obs];
+            }
+        }
+
+        res[obs] = counter;
+    }
+
+    return res;
+}
+
+
+
+
+// [[Rcpp::export]]
+List cpp_cut(NumericVector x_sorted, NumericVector cut_points, IntegerVector is_included){
+    // x_sorted: no NA, sorted
+    // cut_points: bounds
+    // is_included: for each bound, if it is included or not
+    //
+
+    int N = x_sorted.length();
+    int n_cuts = cut_points.length();
+
+    bool is_int = true;
+    for(int i=0 ; i<N ; ++i){
+        if(fabs(x_sorted[i] - round(x_sorted[i])) > 0.00000000001){
+            is_int = false;
+            break;
+        }
+    }
+
+    IntegerVector x_int(N, n_cuts + 1);
+    IntegerVector isnt_empty(n_cuts + 1);
+    NumericVector value_min(n_cuts + 1);
+    NumericVector value_max(n_cuts + 1);
+
+    int index = 0;
+    bool first = true;
+    bool include = is_included[0];
+    double cutoff = cut_points[0];
+    int i = 0;
+    while(i < N){
+
+        if(include ? x_sorted[i] <= cutoff : x_sorted[i] < cutoff){
+
+            if(first){
+                isnt_empty[index] = true;
+                value_min[index] = x_sorted[i];
+                first = false;
+            }
+
+            x_int[i] = index + 1;
+            ++i;
+
+        } else {
+            // we increment index
+            // bins can be empty
+
+            if(isnt_empty[index] && i > 0){
+                value_max[index] = x_sorted[i - 1];
+            }
+
+            ++index;
+
+            if(index == n_cuts){
+                // last bin: we've done it at initialization
+                isnt_empty[index] = true;
+                value_min[index] = x_sorted[i];
+                value_max[index] = x_sorted[N - 1];
+                break;
+            }
+
+            include = is_included[index];
+            cutoff = cut_points[index];
+            first = true;
+        }
+    }
+
+    if(index != n_cuts){
+        value_max[index] = x_sorted[N - 1];
+    }
+
+    List res;
+    res["x_int"] = x_int;
+    res["isnt_empty"] = isnt_empty;
+    res["value_min"] = value_min;
+    res["value_max"] = value_max;
+    res["is_int"] = is_int;
+
+    return res;
+}
+
+// [[Rcpp::export]]
+bool cpp_is_int(SEXP x){
+
+    if(TYPEOF(x) == INTSXP){
+        return true;
+    }
+
+    if(TYPEOF(x) != REALSXP){
+        return false;
+    }
+
+    int N = Rf_length(x);
+    double *px = REAL(x);
+
+    bool is_int = true;
+    for(int i=0 ; i<N ; ++i){
+        if(fabs(px[i] - round(px[i])) > 0.00000000001){
+            is_int = false;
+            break;
+        }
+    }
+
+    return is_int;
+}
+
+// [[Rcpp::export]]
+double cpp_hash_string(std::string x){
+    // simple function hashing a string
+    // used to identify tables in etable
+
+    double res = std::hash<std::string>{}(x);
+
+    return res;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

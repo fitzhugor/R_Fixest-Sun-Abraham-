@@ -17,9 +17,11 @@ reference:
       desc: Visualize results in tables or graphs
       contents:
         - etable
+        - coefplot
+        - iplot
         - style.df
         - style.tex
-        - coefplot
+        - extralines_register
     - title: Handling results, single
       desc: Extracts values from single estimations
       contents:
@@ -31,19 +33,26 @@ reference:
         - confint.fixest
         - print.fixest
         - setFixest_print
+    - title: Difference-in-difference tools
+      desc: Various tools to perform DiD estimations
+      contents:
+        - sunab
+        - aggregate.fixest
+        - i
     - title: Standard-errors
       desc: Computing the Standard-errors
       contents:
         - vcov.fixest
         - summary.fixest
-        - dof
-        - matches("est_(se|dof)$")
+        - ssc
+        - matches("est_(vocv|ssc)$")
+        - matches("^vcov_")
     - title: Multiple estimations
       desc: Perform, and handle, multiple estimations
       contents:
         - matches("stepwise|c?sw0?")
         - matches("fixest_multi")
-    - title: stats method
+    - title: Methods from the `stats` package
       desc: Various methods from the stats package
       contents:
         - model.matrix.fixest
@@ -66,7 +75,8 @@ reference:
       contents:
         - demean
         - to_integer
-        - interact
+        - bin
+        - ref
     - title: Panel data tools
       desc: Set of tools for panel data
       contents:
@@ -84,6 +94,7 @@ reference:
       contents:
         - fitstat
         - fitstat_register
+        - degrees_freedom
         - r2
         - AIC.fixest
         - BIC.fixest
@@ -99,7 +110,15 @@ reference:
     - title: Other methods and functions
       desc: Other methods and functions that didn't fit the previous sections
       contents:
+        - est_env
+        - dsb
+        - check_conv_feols
+        - sample_df
+        - n_unik
+        - osize
         - did_means
+        - fixest_startup_msg
+        - obs
         - bread.fixest
         - collinearity
         - estfun.fixest
@@ -110,5 +129,6 @@ reference:
       contents:
         - base_did
         - trade
+        - base_stagg
 
 

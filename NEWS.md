@@ -1,5 +1,854 @@
 
-# fixest 0.8.1
+# fixest 0.10.5
+
+## Bug fixes
+
+ - fix bug in function `coef()` leading to methods to throw errors in R devel. Thanks to @vincentarelbundock for reporting ([#291](https://github.com/lrberge/fixest/issues/291)).
+
+ - fix bug in the `predict` method when applied to objects estimated with `feNmlm`. Thanks again to @vincentarelbundock for reporting ([#292](https://github.com/lrberge/fixest/issues/292))! 
+ 
+ - fix missing variable names in the VCOV matrix of `feNmlm` models. Thanks (yet again!) to @vincentarelbundock for reporting ([#293](https://github.com/lrberge/fixest/issues/293)).
+ 
+## Other
+
+ - the function `xpd` gains the argument `add`.
+
+
+# fixest 0.10.4
+
+## Hot fix
+
+ - fix major bug related to the extraction of fixed-effects (function `fixef`) when there are 3+ fixed-effects. This bug led to, in some specific circumstances, wrong values for the fixed-effects coefficients. Thanks a lot to @pachadotdev ([#286](https://github.com/lrberge/fixest/issues/286)) for finding this out!
+
+## Other bug fixes
+
+ - fix bug in `confint` when `sunab` was used (thanks to Sarah Hofmann).
+ 
+ - fix an important "documentation bug" on the Sun and Abraham method (thanks to Kyle Butts [#287](https://github.com/lrberge/fixest/issues/287#issuecomment-1083243256)).
+ 
+ - fix bugs regarding `view`/`markdown` features of `etable`.
+ 
+## Other
+
+ - added compatibility with `car::deltaMethod` following Grant McDermott's suggestion.
+ 
+ - new function `lag_fml` which is an alias to `lag.formula`. The latter being easily stomped by other function names from other packages.
+
+# fixest 0.10.3
+
+ - fix bug linked to the proper identification of estimations with only fixed-effects.
+ 
+ - remove the use of `anyNA.data.frame` leading to a dependency to R 3.6.3 (reported by @MichaelChirico [#261](https://github.com/lrberge/fixest/issues/261)).
+
+# fixest 0.10.2
+
+## Bug fixes
+
+  - fix bug in stepwise estimations when two (stepwised) explanatory variables have exactly the same NAs values.
+
+  - fix display bug regarding factors in `etable` when `dict` was present.
+  
+  - fix bug `tablefoot.value` not working any more (reported by @resulumit [#224](https://github.com/lrberge/fixest/issues/224)).
+  
+  - fix possible environment problem when estimating non linear functions outside of the global environment.
+  
+  - fix bug in the stepwise functions `sw` and `csw` when they contained only one variable.
+  
+  - fix bug in `etable` preventing automatic headers to be displayed.
+  
+  - fix bug in `n_unik` preventing the auto completion of variable names.
+  
+  - fix bug in `fitstat` for the KPR statistic (reported by @etiennebacher [#161](https://github.com/lrberge/fixest/issues/161)).
+  
+  - fix bug in `i` when two factor variables were interacted and one specific value of one variable was to be set as a reference.
+  
+  - fix bug in `model.matrix` when no variable was used in the estimation (reported by @kylebutts [#229](https://github.com/lrberge/fixest/issues/229)).
+  
+  - `model.matrix` now returns the variables in the same order as in the estimation -- a discrepancy could happen in stepwise estimations with interactions in which the interactions were put *before* fixed covariates (related to @sergiu-burlacu [#231](https://github.com/lrberge/fixest/issues/231)).
+  
+  - fix bugs in `feglm.fit` prevented the VCOV to be computed (reported by @etiennebacher and @edrubin [#237](https://github.com/lrberge/fixest/issues/237))
+  
+  - fix bug in `predict` with variables created with `i()` leading to a prediction even for values not included in the original estimation (reported by @vincentarelbundock [#235](https://github.com/lrberge/fixest/issues/235)).
+  
+  - fix bug in multiple estimations when the data contains weights and there are missing values in the y's or X's (reported by @sahilchinoy [#263](https://github.com/lrberge/fixest/issues/263)).
+  
+  - fix bug multiverse stepwise when the estimation contains fixed-effects or IVs (reported by @resulumit [#260](https://github.com/lrberge/fixest/issues/260)).
+  
+  - fix bug in the startup message trigger.
+  
+  - increase the robustness of the code leading to the startup message (reported by @flycattt [#262](https://github.com/lrberge/fixest/issues/262)).
+  
+  - improve the robustness of the algorithm parsing the fixed-effects (linked to issue [#253](https://github.com/lrberge/fixest/issues/253)).
+  
+  - fix minor bug in the Cragg-Donald statistic.
+  
+  - fix peculiar problem on load when directories names end with ".R" (thanks to @kyleam [#271](https://github.com/lrberge/fixest/issues/271)).
+  
+  - remove remaining large items from GLM estimations with `lean = TRUE`.
+  
+  - fix bug in removing the singletons from several fixed-effects (reported by @johannesbubeck [#244](https://github.com/lrberge/fixest/issues/244)).
+  
+  - in rep.fixest: replace argument cluster with argument vcov to enable the use of any VCOV (related to [#258](https://github.com/lrberge/fixest/issues/258) by @ShunsukeMatsuno).
+  
+  - fix bug in predict, which automatically discarded NA values (reported by @ColinTB [#273](https://github.com/lrberge/fixest/issues/273)).
+  
+## etable
+
+#### New arguments
+
+ - new argument `view` to display the latex table in the viewer pane (suggestion by Or Avishay-Rizi [#227](https://github.com/lrberge/fixest/issues/227)). You need to a) have a working distribution of pdflatex, imagemagick and ghostscript, or b) have the R packages pdftools and tinytex installed, for this feature to work.
+ 
+ - new argument `view.cache` in `setFixest_etable`: whether to cache the PNGs generated.
+ 
+ - new argument `export` to export the Latex table in PNG to a file.
+ 
+ - new (experimental) argument `markdown`: Latex tables can be automatically integrated in the non-Latex markdown document in PNG format.
+ 
+ - new argument `div.class`. Linked to the `markdown` argument. In Rmarkdown documents, the table in PNG format is embedded in a `<div>` container. The class of the div is `div.class`, which is by default `"etable"`.
+ 
+ - new argument `tpt` to nest the table in a `threeparttable` environment. Notes are then nested into the `tablenotes` environment.
+ 
+ - in `style.tex`: new argument `notes.tpt.intro` to insert code right after the `tablenotes` environment and before any note (useful to set the font size of notes globally for instance).
+ 
+ - new argument `arraystretch` to set the height of the table rows.
+ 
+ - new argument `fontsize` which applies Latex font sizes to the table.
+ 
+ - new argument `adjustbox`: `adjustbox = TRUE` nests the tabular into an `adjustbox` environment with `width = \\textwidth, center` as default option. Use `adjustbox = x` with `x` a number giving the text-width. Use `adjustbox = "x th"` with `x` a number giving the text-height. Finally you can use a character string, as in `adjustbox = "my options"`, that will be passed verbatim as a an `adjustbox` option.
+ 
+ - new argument `highlight` to highlight the coefficients with a frame or by changing the row/cell color.
+ 
+ - new argument `coef.style` to apply an arbitrary style to one or several coefficients.
+ 
+ - in `style.tex`: new argument `rules_width` to easily set the width of the `booktabs` rules.
+ 
+ - in `style.tex`: new argument `caption.after` to insert code right after the caption.
+ 
+ - in `style.tex`: new argument `no_border` to remove the borders on the sides of the table.
+
+#### New features
+
+ - the quality of the tex output has been substantially improved.
+ 
+ - `signif.code` now replaces `signifCode` (retro compatibility ensured).
+ 
+ - `signifCode` is removed from `setFixest_etable`, and `signif.code` is added to both `style.tex` and `style.df` so that each style can have its own significance code defined globally.
+ 
+ - the object returned by `etable` are now of class `etable_tex` (when `tex = TRUE`) or `etable_df`, both types having their own printing method.
+  
+ - the significance codes are now displayed under the table when the output is a `data.frame`.
+ 
+ - in `headers`/`extralines`: `cmidrule` does not show up for empty column names any more.
+ 
+ - new markup: markdown-style markup (e.g. `**text**`) can be used to put text in italic/bold in almost anything in the table.
+ 
+ - `notes` can be set in the dictionary: useful for notes (like source for example) that gets repeated across tables.
+ 
+ - `line.top` and `line.bottom` now admit the values `simple` and `double`. The argument `line.bottom` now affects the "effective" end of table, irrespective of the value of `tablefoot`. This is more in line with intuition.
+ 
+ - improve the use of `tabularx`.
+ 
+ - automatic support `makecell`: any new lines found in names within the table will be translated with `makecell`. For example: `"The \n long \n varname"` is automatically translated into `\makecell{The \\ long \\ varname}`.
+ 
+## dsb
+
+ - completely new function `dsb()` to manipulate strings. Applies many low level string operations very easily. The syntax may be a bit disturbing at first, but, unlike French grammar, there's some logic behind!
+ 
+ - there are over 30 basic string operations available! Do complex string manipulations in a single call!
+
+```R
+# At first sight, it's impossible to understand what's going on.
+# But I assure you, it's pretty logical! 
+# Type dsb("--help") to get some help.
+
+dollar = 6
+reason = "glory"
+dsb("Why do you develop packages? For .[`dollar`*c!$]?",
+    "For money? No... for .[U,''s, c?reason]!", sep = "\n")
+#> Why do you develop packages? For $$$$$$?
+#> For money? No... for G L O R Y!
+```
+
+ - the dot square bracket operator in formulas now calls `dsb` when the calls are nested:
+```R
+xpd(~ sw(.[, "disp:.[/mpg, cyl]"]))
+#> ~sw(disp:mpg, disp:cyl)
+```
+
+## New argument in all estimations
+
+ - new argument `only.coef` in all estimation. If `TRUE`, then only the estimated coefficients are returned, which can be useful for MC experiments.
+ 
+## New functions
+
+- new function `est_env` to estimate a model from a `fixest` environment. Mostly useful to cut overheads in simulations.
+```R
+# First we get the environment (the estimation is not performed!)
+env = feols(mpg ~ disp + drat, mtcars, only.env = TRUE)
+
+# Then we estimate: we get the reult from feols(mpg ~ disp + drat, mtcars)
+
+est_env(env)
+#> OLS estimation, Dep. Var.: mpg
+#> Observations: 32 
+#> Standard-errors: IID 
+#>              Estimate Std. Error  t value   Pr(>|t|)    
+#> (Intercept) 21.844880   6.747971  3.23725 3.0167e-03 ** 
+#> disp        -0.035694   0.006653 -5.36535 9.1914e-06 ***
+#> drat         1.802027   1.542091  1.16856 2.5210e-01    
+#> ---
+#> Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+#> RMSE: 3.07661   Adj. R2: 0.712458
+
+# Why doing that? You can modify the env w/t incurring overheads
+
+assign("weights.value", mtcars$wt, env)
+# New estimation with weights
+est_env(env)
+#> OLS estimation, Dep. Var.: mpg
+#> Observations: 32 
+#> Standard-errors: IID 
+#>              Estimate Std. Error  t value   Pr(>|t|)    
+#> (Intercept) 21.967576   6.320006  3.47588 1.6241e-03 ** 
+#> disp        -0.032922   0.005884 -5.59478 4.8664e-06 ***
+#> drat         1.505517   1.470671  1.02369 3.1444e-01    
+#> ---
+#> Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+#> RMSE: 5.08781   Adj. R2: 0.709392
+```
+
+- new function `ref` which allows to re-factor variables on-the-fly. This function always returns a factor and relocates the values given in the argument as the first factor levels. It also allows to bin values, similarly to the function `bin`:
+```R
+# We want to place 5 in the first place
+ref(1:5, 5)
+#> [1] 1 2 3 4 5
+#> Levels: 5 1 2 3 4
+
+# You can also bin at the same time
+ref(1:5, .("4:5" = 4:5))
+#> [1] 1   2   3   4:5 4:5
+#> Levels: 4:5 1 2 3
+```
+
+ 
+## Other
+
+ - `bin`: `cut::` now ignores white spaces, so that `cut:: q1 ] q3 [` works appropriately.
+ 
+ - speed of stepwise estimations (using `sw` [not `csw`]) has been improved.
+ 
+ - recursive formula macro definitions are allowed (feature request by @turbanisch [#234](https://github.com/lrberge/fixest/issues/234)).
+ 
+ - the startup message does not pop in Rmarkdown documents any more.
+ 
+ - function `sample_df` gains the argument `previous` which recovers the previous draw.
+
+# fixest 0.10.1
+
+## Bug fixes
+
+ - remove new R native piping test `|>` which led to errors in R < 4.1.0 despite conditional testing.
+ 
+ - fix bug in `etable` `headers` when one wants to include several lines and the first line contains only one element repeated across columns.
+ 
+ - fix bugs in predict: a) when variables are created with functions of the data, and b) when the new data contains single level factors (relates to issues [#200](https://github.com/lrberge/fixest/issues/200) and [#180](https://github.com/lrberge/fixest/issues/180) by @steffengreup and @IsadoraBM).
+ 
+ - fix bug in `etable` non-clustered standard errors not displaying properly in footers.
+ 
+ - fix bug in `etable` regarding the escaping of `fixef_sizes` (reported by Apoorva Lal [#201](https://github.com/lrberge/fixest/issues/201)).
+ 
+ - fix bug introduced in 0.10.0 preventing the estimation of IV models with interacted fixed-effects (reported by @etiennebacher [#203](https://github.com/lrberge/fixest/issues/203)).
+ 
+ - fix bug in IV estimations when: a) no exogenous variables were present AND the IV part contained at lags; and b) the endogenous variables contained at least two lags. Reported by Robbie Minton.
+ 
+ - fix bug in the `.fit` methods when the argument `vcov` wasn't `NULL`.
+ 
+ - fix bug in `summary.fixest_multi`: when the variance was NA and internal bug could pop in some circumstances.
+ 
+ - fix bug `plot.fixef` not working for `fepois` (reported by @statzhero [#213](https://github.com/lrberge/fixest/issues/213)).
+ 
+ - fix error message when the (wrong) argument `X` is used in `feols`.
+ 
+## Dot square bracket operator
+
+ - add a comma first, like in `.[,stuff]`, to separate variables with commas (instead of separating them with additions):
+```R
+lhs_vars = c("var1", "var2")
+xpd(c(.[,lhs_vars]) ~ csw(x.[,1:3]))
+#> c(var1, var2) ~ csw(x1, x2, x3)
+```
+
+ - new function `dsb`: applies the dot square bracket operator to character strings.
+ 
+ - in the function `dsb`, you can add a string literal in first or last position in `.[]` to "collapse" the character string in question. The way the collapse is performed depends on the position:
+```R
+name = c("Juliet", "Romeo")
+
+# default behavior => vector
+dsb("hello .[name], what's up?")
+#> [1] "hello Juliet, what's up?" "hello Romeo, what's up?" 
+
+# string literal in first position
+dsb("hello .[' and ', name], what's up?")
+#> [1] "hello Juliet and Romeo, what's up?"
+
+# string literal in last position
+dsb("hello .[name, ' and '], what's up?")
+#> [1] "hello Juliet and hello Romeo, what's up?"
+
+```
+
+## bin
+
+ - `bin`: numeric vectors can be 'cut' with the new special value `'cut::q3]p90]'`, check it out!
+```R
+data(iris)
+plen = iris$Petal.Length
+
+# 3 parts of (roughly) equal size
+table(bin(plen, "cut::3"))
+#> 
+#> [1.0; 1.9] [3.0; 4.9] [5.0; 6.9] 
+#>         50         54         46 
+
+# Three custom bins
+table(bin(plen, "cut::2]5]"))
+#> 
+#> [1.0; 1.9] [3.0; 5.0] [5.1; 6.9] 
+#>         50         58         42 
+
+# .. same, excluding 5 in the 2nd bin
+table(bin(plen, "cut::2]5["))
+#> 
+#> [1.0; 1.9] [3.0; 4.9] [5.0; 6.9] 
+#>         50         54         46 
+
+# Using quartiles
+table(bin(plen, "cut::q1]q2]q3]"))
+#> 
+#> [1.0; 1.6] [1.7; 4.3] [4.4; 5.1] [5.2; 6.9] 
+#>         44         31         41         34 
+
+# Using percentiles
+table(bin(plen, "cut::p20]p50]p70]p90]"))
+#> 
+#> [1.0; 1.5] [1.6; 4.3] [4.4; 5.0] [5.1; 5.8] [5.9; 6.9] 
+#>         37         38         33         29         13 
+
+# Mixing all
+table(bin(plen, "cut::2[q2]p90]"))
+#> 
+#> [1.0; 1.9] [3.0; 4.3] [4.4; 5.8] [5.9; 6.9] 
+#>         50         25         62         13
+
+# Adding custom names
+table(bin(plen, c("cut::2[q2]p90]", "<2", "]2; Q2]", NA, ">90%")))
+#>         <2    ]2; Q2] [4.4; 5.8]       >90% 
+#>         50         25         62         13 
+```
+
+ - `bin` also accepts formulas, e.g. `bin = list("<2" = ~ x < 2)` (`x` must be the only variable).
+ 
+ - `bin` accepts the use of `.()` for `list()`.
+ 
+ - you can add the location of the element using `@d` in the name. Useful to rearrange factors:
+```R
+base = setNames(iris, c("y", "x1", "x2", "x3", "species"))
+table(base$species)
+#>     setosa versicolor  virginica 
+#>         50         50         50
+
+table(bin(base$species, .("@3" = "seto", "@1 VIRGIN" = "virg")))
+#>     VIRGIN versicolor     setosa 
+#>         50         50         50 
+```
+ 
+ 
+## etable
+
+ - the tex output is now "nicely" formatted.
+ 
+ - argument `extralines` replaces the argument `extraline` to increase coherence. Hence function `extraline_register` becomes `extralines_register` (the change is done without deprecation since I guess this function must be only rarely used).
+ 
+ - arguments `extralines` and `headers` accept `.()` for `list()`.
+```R
+base = setNames(iris, c("y", "x1", "x2", "x3", "species"))
+
+```
+ 
+## New function
+ 
+ - `check_conv_feols`: checks the convergence of the fixed-effects in `feols` models by looking at the first-order conditions.
+ 
+## New functions, unrelated but possibly useful
+
+Although a bit unrelated to the purpose of this package, these functions are so extensively used in the author's research that he decided to leverage his author privileges to include them in `fixest` to make them easier to share with co-authors.
+
+ - `osize`: simple function returning a formatted object size.
+ 
+ - `n_unik`: simple but flexible function returning the number of unique elements from variables in one or several data sets. Useful for checking keys.
+ 
+ - `sample_df`: simple function to extract random lines from a `data.frame`.
+ 
+## Other new features
+
+ - when computing Newey-West standard-errors for time series, the bandwidth is now selected thanks to the [bwNeweyWest](https://sandwich.r-forge.r-project.org/reference/NeweyWest.html) function from the [sandwich](https://sandwich.r-forge.r-project.org/index.html) package. This function implements the method described in Newey and West 1994.
+ 
+ - add `type = "se_long"` to `summary.fixest_multi` which yields all coefficients and SEs for all estimations in a "long" format.
+ 
+ - only in `fixest` estimations, using a "naked" dot square bracket variable in the left-hand-side includes them as multiple left hand sides. Regular expressions can also be used in the LHS.
+```R
+base = setNames(iris, c("y", "x1", "x2", "x3", "species"))
+y = c("y", "x1")
+feols(.[y] ~ x2, base)
+#> Standard-errors: IID 
+#> Dep. var.: y
+#>             Estimate Std. Error t value  Pr(>|t|)    
+#> (Intercept) 4.306603   0.078389 54.9389 < 2.2e-16 ***
+#> x2          0.408922   0.018891 21.6460 < 2.2e-16 ***
+#> ---
+#> Dep. var.: x1
+#>              Estimate Std. Error  t value   Pr(>|t|)    
+#> (Intercept)  3.454874   0.076095 45.40188  < 2.2e-16 ***
+#> x2          -0.105785   0.018339 -5.76845 4.5133e-08 ***
+
+
+etable(feols(..("x") ~ y + i(species), base))
+#>                                  model 1            model 2            model 3
+#> Dependent Var.:                       x1                 x2                 x3
+#>                                                                               
+#> (Intercept)            1.677*** (0.2354) -1.702*** (0.2301) -0.4794** (0.1557)
+#> y                     0.3499*** (0.0463) 0.6321*** (0.0453) 0.1449*** (0.0306)
+#> species = versicolor -0.9834*** (0.0721)  2.210*** (0.0705) 0.9452*** (0.0477)
+#> species = virginica   -1.008*** (0.0933)  3.090*** (0.0912)  1.551*** (0.0617)
+#> ____________________ ___________________ __________________ __________________
+#> S.E. type                            IID                IID                IID
+#> Observations                         150                150                150
+#> R2                               0.56925            0.97489            0.93833
+#> Adj. R2                          0.56040            0.97438            0.93706
+```
+ 
+## Other
+
+ - improve error messages when `subset` does not select any element.
+ 
+ - in `xpd` and `fixest` estimations, variables can be "grepped" from the data set with `regex("regex")`.
+ 
+ - add inheritance of the default style in `iplot` when the style is set globally with `setFixest_coefplot`.
+ 
+ - improve error messages in general by prompting additional error calls (when appropriate).
+ 
+ - the dictionaries now ignore white spaces in coefficient names (thanks to Caleb Kwon).
+ 
+ - the package startup messages have been improved (they should pop up less often).
+ 
+ - to comply with CRAN policies, the startup message doesn't write on the .Renviron file any more.
+
+# fixest 0.10.0
+
+## Bugs fixes
+
+ - Fix bug occurring in IV models with multiple instruments and with multithreading on. That bug could lead to the wrong imputation of the IV residuals, hence affecting the standard-errors (although the order of magnitude of the variation should be minor). Thanks to @whitfillp [#182](https://github.com/lrberge/fixest/issues/182).
+ 
+ - Fix minor, rare, bug occurring in `feglm` when the model was badly specified and VAR(Y) >>>> VAR(X) and there were only one variable.
+ 
+ - `model.matrix` did not work with `type = "fixef"` (thanks to @kylebutts [#172](https://github.com/lrberge/fixest/issues/172)).
+ 
+ - In nonlinear estimations:`fixef.rm = "none"` or `fixef.rm = "singleton"` did not work as expected (thanks to @kre32  [#171](https://github.com/lrberge/fixest/issues/171)).
+ 
+ - Fix bug that could occur when observations had to be removed on several fixed-effects dimensions (had no impact on the estimates though).
+ 
+ - Fix bug in `etable` when `file` is provided and `tex = FALSE` (thanks to @roussanoff [#169](https://github.com/lrberge/fixest/issues/169)).
+ 
+ - Fix bug when: i) a `fixest_panel` is used as a data set in an estimation, ii) NA values are to be removed and iii) fixed-effects are used. Thanks to Nicola Cortinovis for the report!
+ 
+ - Fix bug in `to_integer` when converting multiple vectors and sorting is required, without items.
+ 
+ - Fix bug in `feols.fit` when the matrix of regressors was only partially named (reported by @leucothea [#176](https://github.com/lrberge/fixest/issues/176)).
+ 
+ - Fix bug in the value of the fixed-effects coefficients in IV estimations (thanks to @tappek [#190](https://github.com/lrberge/fixest/issues/190)).
+ 
+ - Fix bug in `coefplot` when `lean = TRUE` in the estimation (reported by @adamaltmejd [#195](https://github.com/lrberge/fixest/issues/195)).
+ 
+ - Fix bug in `iplot` when IVs contained interactions.
+ 
+ - Fix bug in `iplot` preventing some variables to be removed (reported by @roussanoff [#164](https://github.com/lrberge/fixest/issues/164)).
+ 
+ - Fix 0 right-padding of numbers displayed in estimation results that could be confusing (reported by @hjuerges [#197](https://github.com/lrberge/fixest/issues/197)).
+ 
+## Major changes
+
+ - New argument `vcov`:
+ 
+    * greatly simplifies and extends how to specify the SEs
+ 
+    * completely replaces the arguments `se` and `cluster` (they still work)
+    
+    * accepts functions
+    
+    * see the documentation in the [vignette](https://lrberge.github.io/fixest/articles/fixest_walkthrough.html#the-vcov-argument-1)
+    
+ - New built-in VCOVs:
+
+    * Newey-West (1987) for serially correlated errors
+    
+    * Driscoll-Kraay (1998) for cross-sectionally and serially correlated errors
+    
+    * Conley (1999) for spatially correlated errors
+    
+ - you can summon variables from the environment directly in the formula using the new dot square bracket (DSB) operator. The DSB operator can be used to create many variables at once, and can also be using within regular expressions. One example:
+```R
+base = setNames(iris, c("y", "x1", "x2", "x3", "species"))
+i = 2:3
+z = "i(species)"
+feols(y ~ x.[i] + .[z], base)
+#> OLS estimation, Dep. Var.: y
+#> Observations: 150 
+#> Standard-errors: IID 
+#>                      Estimate Std. Error   t value   Pr(>|t|)    
+#> (Intercept)          3.682982   0.107403 34.291343  < 2.2e-16 ***
+#> x2                   0.905946   0.074311 12.191282  < 2.2e-16 ***
+#> x3                  -0.005995   0.156260 -0.038368 9.6945e-01    
+#> species::versicolor -1.598362   0.205706 -7.770113 1.3154e-12 ***
+#> species::virginica  -2.112647   0.304024 -6.948940 1.1550e-10 ***
+#> ---
+#> Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+#> RMSE: 0.333482   Adj. R2: 0.832221
+```
+    
+ - in `i` and `sunab` you can now bin the variables on the fly with the new argument `bin`. The new function [`bin`](https://lrberge.github.io/fixest/reference/bin.html) is also available at the user-level.
+ 
+ - Function `dof` has been renamed into `ssc` (stands for small sample correction) to improve clarity. Retro compatibility is partially ensured but the function `dof` will be removed at some point.
+    
+## Breaking changes
+
+ - Functions `setFixest_dof` and `setFixest_se` have been renamed into `setFixest_ssc` and `setFixest_vcov`. **No retro compatibility ensured.**
+ 
+ - Removal of the `var::factor` operator to interact a continuous variable with a variable treated as a factor.
+ 
+## New features
+
+ - `feglm` now accepts partially matched character shortcuts for families: "poisson", "logit", "probit" are now valid `family` arguments.
+ 
+ - `predict.fixest` accepts the new argument `fixef` which, if `TRUE`, returns a data.frame of the fixed-effects coefficients for each observation, with the same number of columns as the number of fixed-effects (feature requests [#144](https://github.com/lrberge/fixest/issues/144) and [#175](https://github.com/lrberge/fixest/issues/175) by @pp2382 and @cseveren).
+ 
+ - offsets present in the formula are now accepted.
+ 
+ - VCOV aliases (both Grant McDermott's suggestions: thanks Grant!): 
+ 
+    * the default standard-errors is now `"iid"` (former keywords still work)
+    
+    * the keyword `hc1` can be used to summon heteroskedasticity-robust SEs
+    
+  - *Argument sliding*: the argument `vcov` can be called implicitly when `data` is set up globally:
+  ```R
+  base = setNames(iris = c("y", "x1", "x2", "x3", "species"))
+  
+  # Setting up the data
+  setFixest_estimation(data = base)
+  
+  # Now vcov can be used without using vcov = stuff:
+  feols(y ~ x1 + x2, ~species)
+  
+  # => same as feols(y ~ x1 + x2, vcov = ~species)
+  ```
+  
+  - piping the data now works:
+  ```R
+  mtcars |> feols(cyl ~ mpg)
+  # => same as feols(cyl ~ mpg, mtcars)
+  ```
+  
+  - the user can now specify custom degrees of freedom to compute the t-tests in `ssc()` (feature request by Kyle F. Butts).
+  
+  - the predict method gains the new argument `se.fit` and `interval` which computes the SEs/CI of the predicted variable. This only works for OLS models without fixed-effects. Feature request by Gábor Békés [#193](https://github.com/lrberge/fixest/issues/193).
+  
+  - `iplot` gains the argument `i.select` to navigate through the different variables created with `i()` (provided there are more than one of course).
+  
+## etable
+
+ - new argument `interaction.order` to control the order in which interacted variables are displayed (feature request by @inkrement [#120](https://github.com/lrberge/fixest/issues/120)).
+ 
+ - new argument `i.equal` to control how the values taken by factor variables created with `i()` are displayed.
+ 
+ - new `meta.XX` family of arguments when exporting to Latex. They include various type of information as comments before the table (suggestion of adding the time by Apoorva Lal [#184](https://github.com/lrberge/fixest/pull/184)). So far the new arguments are: `meta.time`, `meta.author`, `meta.sys`, `meta.call`, `meta.comment`. The argument `meta` is a shortcut to all these.
+ 
+ - default values can be saved at the project level using the argument `save = TRUE` in the function `setFixest_etable`. This means that default values will be automatically set without having to call `setFixest_etable` at the startup of the R session. For example, if you want to permanently add the creation time in your Latex exports, just use `setFixest_etable(meta.time = TRUE, save = TRUE)`, and you won't need to bother about it anymore in any future session in your current project.
+ 
+ - some changes in `extraline`, now: *i)* it accepts raw vectors, *ii)* it accepts lines without title, *iii)* the elements are recycled across models, *iv)* it accepts elements of the form `list("item1" = #item1, "item2" = #item2, etc)`, and *v)* the elements are Latex-escaped.
+ 
+ - in `style.tex`: all Latex-escaping is removed.
+ 
+ - the argument `subtitle` has been renamed into `headers` (retro-compatibility is ensured).
+ 
+ - on the new argument `headers`:
+   * it accepts named lists of numbers, where the names represent the values in the cell and the numbers represent the span. For example `headers = list("Gender" = list("M" = 3, "F" = 4))` will create a line with 3 times "M" and 4 times "F". 
+   * adding the special tag `":_:"` in the row name will add a rule for each column group (in the previous example `":_:Gender"` would do). Suggestion by @nhirschey [#173](https://github.com/lrberge/fixest/pull/173).
+   * you can control the placement of the header line by using as first character the following special tags: "^" (top), "-" (mid, default), "_" (bottom). Ex: `headers = list("_Gender" = list("M" = 3, "F" = 4))` will place the header line at the very bottom of the headers.
+   * by default all values are Latex-escaped. You can disable escaping by adding `":tex:"` in the row title.
+   
+ - argument `sdBelow` has been renamed into `se.below` (retro-compatibility is ensured).
+ 
+ - new argument `se.row` to control whether the row displaying the standard-errors should be displayed (clarification requested by @waynelapierre [#127](https://github.com/lrberge/fixest/issues/127)).
+ 
+ - `dict` now directly modifies the entries in the global dictionary instead of creating a brand new one. For example if you have `setFixest_dict(c(cyl="Cylinder"))` and then use `etable` with `dict=c(mpg="miles per gallon")`, you end up with both the names `cyl` and `mpg` to be modified. To disable this behavior, you can add `"reset"` as the first element, like in `dict=c("reset", mpg="miles per gallon")`.
+ 
+## Other
+
+ - in multiple estimations, it is now made explicit that the information regarding NA values only concern the variables in common across all models (formerly, it was implicit and hence confusing).
+
+
+# fixest 0.9.0
+
+## Bugs
+
+ - Major bug, leading R to crash, occurring when the same variable was used with several different slopes (thanks to @Oravishayrizi [#119](https://github.com/lrberge/fixest/issues/119)). 
+ 
+ - Major bug, leading R to crash, occurring when 3+ fixed-effects are to be combined.
+ 
+ - Major bug, leading R to crash, occurring when multiple LHS are estimated with the option `fixef.rm = "singleton"` (thanks to Ole Rogeberg).
+ 
+ - Major bug, leading R to crash, occurring when *many* fixed-effects have to be removed because of only 0/1 outcomes (thanks to @mangelett [#146](https://github.com/lrberge/fixest/issues/146) and @ChristianDueben [#157](https://github.com/lrberge/fixest/issues/157)).
+ 
+ - Fix bug occurring for undefined covariances with only one regressor (thanks to @joseph-richard-martinez [#118](https://github.com/lrberge/fixest/issues/118)).
+ 
+ - Fix bug in IV estimations regarding the Wald statistic of the first stage when `lean = TRUE` and the VCOV computation is done post estimation.  
+ 
+ - Fix bug in the Wald test in IV estimations when variables are removed because of collinearity (thanks to @pei-huang [#117](https://github.com/lrberge/fixest/issues/117)).
+ 
+ - Fix bug regarding multiple estimations when the multiple fixed-effects contained variables with varying slopes.
+ 
+ - Fix various display bugs in `fitstat`.
+ 
+ - Fix bug in `etable`: using split sample estimations prevented the argument `title` to render correctly. 
+ 
+ - Fix incorrect information message when observations are removed because of infinite values (in some circumstances the removal was wrongly attributed to NAness).
+ 
+ - Fix bug in `etable` when checking the argument `coefstat` (thanks to @waynelapierre [#121](https://github.com/lrberge/fixest/issues/121)).
+ 
+ - Fix bug in `feols` when IV estimations contained fixed-effects and `lean = TRUE` (thanks to @adamaltmejd [#123](https://github.com/lrberge/fixest/issues/123)).
+ 
+ - Fix bug in IV estimations when an endogenous regressor was removed because of collinearity.
+ 
+ - Fix bug estimation without intercept not working when lags are present in the formula (thanks to @nreigl [#126](https://github.com/lrberge/fixest/issues/126)). 
+ 
+ - Fix various bugs when using `subset` in the estimations (reported by @noahmbuckley and @Oravishayrizi, [#129](https://github.com/lrberge/fixest/issues/129) and [#131](https://github.com/lrberge/fixest/issues/131)).
+
+ - Fix error message when data cannot be fetched (reported by @Oravishayrizi [#134](https://github.com/lrberge/fixest/issues/134)).
+ 
+ - Fix bug getting the "G" statistic in `fitstat`.
+ 
+ - Fix bug in `predict` when a `poly()` term was used and the formula was long (reported by @XiangLiu-github [#135](https://github.com/lrberge/fixest/issues/135)). 
+ 
+ - fix bug for extracting sub statistics of `"ivwald"` and `"ivf"` in `fitstat`.
+ 
+ - fix bug when `i()` was used without intercept.
+ 
+ - Fix display bug in `etable` when Tex output is requested and interactions composed of identical variables with different interacted orders are present (reported by @Oravishayrizi [#148](https://github.com/lrberge/fixest/issues/148)).
+ 
+ - Fix bug in `etabe` when `fixef.group` is used and fixed-effects are renamed (reported by @jamesfeigenbaum).
+ 
+ - Fix bug when `fplit` is used with subset.
+ 
+ - Fix bug when using `cluster` with `subset` and NA values are removed (reported by @adamaltmejd [#154](https://github.com/lrberge/fixest/issues/154)).
+ 
+ - Fix bug argument `lean` not working on `summary` when applied to an existing `summary` and only the argument `lean` was present (reported by @adamaltmejd).
+ 
+ - Fix bug when using multiple LHS with lags in the formula (reported by @Nicolas Reigl [#158](https://github.com/lrberge/fixest/issues/154)).
+ 
+ - Fix bug regarding the intercept-only likelihood when weights are provided (only with Poisson and logit models), reported by @fostermeijer [#155](https://github.com/lrberge/fixest/issues/155).
+ 
+## Breaking changes: new i() function
+
+ - the function `i()`, used to create factors or interactions has been tidied up, leading to breaking changes.
+ 
+ - the first two arguments have been swapped! such that now the first argument will always be treated as a factor. 
+ 
+ - the new syntax is `i(factor_var, var, ref, keep, ref2, keep2)` where `var` can be either continuous or factor-like (the argument `f2`, for interaction with factors, has been removed).
+ 
+ - Fix rare bug when the number of parameters is greater than the number of observations and the GLM family has a dispersion parameter.
+ 
+ 
+## Breaking changes: new default family for feglm
+
+ - to be in line with R stats's `glm`, the new default family for `feglm` is `gaussian` (previously it was Poisson, if you were using it, please now use the function `fepois` instead).
+ 
+## Breaking changes: coefplot is now split in two
+
+ - the function `coefplot` has been split in two: 
+ 
+   - `coefplot`: always plots *all* the coefficients. 
+   
+   - `iplot`: plots only interactions or factors created with the function `i()`.
+  
+ - the function `iplot` hence replaces `coefplot`'s former argument `only.inter` which controlled whether or not to focus on interactions.
+
+## etable
+
+  - `group` and `extraline`: enhanced and simplified control of the placement of the new rows. Now only two special characters at the beginning of the row name decide its location.
+  
+  - new argument `fixest.group`. If `TRUE`, then fixed-effects appearing always jointly across models will be grouped in a single row. The user can alternatively specify a list to declare which fixed-effect to group and customize the row name. 
+  
+  - `sdBelow` now works when `tex = FALSE` (request by Sasha Indarte).
+  
+  - `extraline` can now be equal to a formula containing `extraline` macros or valid `fitstat` types.
+  
+    - When a list, `extraline` can contain functions (returning a scalar) that will be applied to each model.  
+  
+    - When a list, `extraline` can contain formulas containing `extraline` macros or valid `fitstat` types. 
+  
+  - You can register `extraline` macros with the new function `extraline_register`.
+  
+  - When `tex = TRUE`, n-way clustering now always leads to the name of clustered SEs (n-way is not shown any more).
+  
+  - Add the argument `coef.just` that controls the justification of the coefficients and standard-errors. Only works when `tex = FALSE` (i.e. a `data.frame` is requested).
+  
+  
+## Sun and Abraham staggered DiD method
+
+ - new function `sunab` that simplifies the implementation of the SA method. 
+ 
+ - just type `sunab(cohort, period)` in a `fixest` estimation and it works!
+  
+## fixest_multi methods
+
+Common methods have been extended to `fixest_multi` objects.
+
+ - `coef.fixest_multi`: re-arranges the coefficients of multiple estimations into a matrix.
+ 
+ - `resid.fixest_multi`: re-arranges the residuals of multiple estimations into a matrix.
+ 
+ 
+## fitstat: New fit statistics
+
+  - `kpr`: Kleibergen-Paap rank test for IV estimations.
+  
+  - `cd`: Cragg-Donald F statistic for IV estimations.
+  
+  - `my`: gives the mean of the dependent variable.
+  
+  
+## New functions
+
+  - `degrees_freedom`: to access the DoFs of the models (sometimes that can be intricate).
+  
+  - `feols.fit`: fit method for feols. 
+  
+  - `obs`: to obtain the observations used in the estimation.
+  
+## New features
+
+  - All `fixest` estimation now accept scalars from the global environment (variables are still not allowed!).
+  
+  - Better handling of the DoFs in `fitstat` (in particular when the VCOV is clustered).
+  
+  - `model.matrix`: 
+  
+    * the endogenous and exogenous regressors, and the instruments from IV estimations can now be easily extracted.
+    
+    * new arguments `as.matrix` and `as.df` to coerce the result to a particular format.
+  
+  - `.fit` methods (`feols.fit` and `feglm.fit`) now handle multiple dependent variables.
+  
+  - `to_integer` now sorts appropriately any kind of vectors (not just numeric/character/factors).
+  
+  - substantial speed improvement when combining several vectors with *many* cases (> millions).
+  
+  - The number of threads to use can now be set permanently at the project level with the new argument `save` in the function `setFixest_nthreads`.
+  
+  
+## Minor breaking changes
+
+ - in `model.matrix` when `type = "lhs"` the return object is now a vector (previously it was a data.frame).
+  
+## Other changes
+
+  - Improve error messages. 
+  
+  - `hatvalues.fixest`: now returns an error instead of a message when fixed-effects are present (it makes the interplay with `sadnwich` 'nicer').
+
+# fixest 0.8.4
+
+## Bugs
+
+ - Fix bug `depvar = FALSE` not working when tex output was requested (thanks to @apoorvalal and @pbaylis [#104](https://github.com/lrberge/fixest/issues/104)).
+ 
+ - Fix bug in naming when `i()` led to only one variable being retained (thanks to @
+colejharvey [#106](https://github.com/lrberge/fixest/issues/106)). 
+
+ - Fix bug display when only degrees of freedom are selected in `fitstat`.
+
+ - Fix bug when `lean = TRUE` in IV estimations with fixed-effects (a large object was still present, thanks to @zozotintin).
+ 
+ - Fix bug display of `etable` in Rmarkdown (thanks to @kdzhang [#93](https://github.com/lrberge/fixest/issues/93) and @nikolassch [#112](https://github.com/lrberge/fixest/issues/112))
+ 
+ - Improve error messages in `fitstat` when selecting statistics components.
+ 
+ - Fix bug in `predict` when `poly()` was used in the estimation (thanks to @tholdaway [#109](https://github.com/lrberge/fixest/issues/109)).
+
+ - Fix bug in `predict`: an error message would not pop when combined fixed-effects are used with `combine.quick = TRUE` (thanks to @benzipperer [#115](https://github.com/lrberge/fixest/issues/115)).
+ 
+ - Fix bug to properly account for the nestedness of combined fixed-effects when clustered standard-errors are requested (thanks to @Oravishayrizi  [#116](https://github.com/lrberge/fixest/issues/116)).
+ 
+ - Fig major bug in `model.matrix` that could make it very slow. Led the function `aggregate` to be very slow (thanks to Benny Goldman).
+ 
+ - Fix bug that prevented `aggregate` to effectively use weights (thanks to Benny Goldman).
+ 
+## New features
+
+ - `model.matrix` gains the new argument `subset` which allows the creation of the design matrix for a subset of variables only.
+ 
+ - `drop.section` now works for `etable` when `tex = FALSE`.
+ 
+ - The argument `panel.id` used in all estimations can be set globally with the function `setFixest_estimation`.
+
+## Other changes
+
+  - `i`: Factor variables with only the values of 0 and 1 are treated as numeric. 
+  
+  - `fitstat`: The statistic `G` is now equal to the degrees of freedom used in the t-test of coefficients testing.
+  
+  - `esttable` and `esttex` are not deprecated any more: they are now pure aliases of `etable`.
+  
+  - `aggregate`: for weighted regressions, `use_weights` controls whether to use the weights to perform the aggregation.
+
+# fixest 0.8.3 (2021-03-01)
+
+## Bugs
+
+ - Remove test that leads to a (uber odd) bug on fedora devel.
+ 
+ - Fix bug in IV estimation when using factors as instrumented variables (thanks to @adamaltmejd [#99](https://github.com/lrberge/fixest/issues/99)).
+ 
+ - Fix bug when using at least two fixed-effects and varying slopes with singletons (thanks to @adamtheising [#89](https://github.com/lrberge/fixest/issues/89)). 
+ 
+## New features
+
+ - In `xpd`, macros are parsed even after creating the formula with the `lhs` and `rhs` arguments.  
+
+# fixest 0.8.2 (2021-02-11)
+
+## Bugs
+
+  - Fix bug in IV estimations when `lean = TRUE` (thanks to @reifjulian [#88](https://github.com/lrberge/fixest/issues/88)).
+  
+  - Fix various bugs related to the use of `summary` when `lean = TRUE` in the estimation.
+  
+  - Fix bug preventing `se = "cluster"` to be used in `etable` (thanks to Caleb Kwon).
+  
+  - Fix bug `etable` not escaping variable names properly when `sdBelow = FALSE` (thanks to Jeppe Viero).
+  
+  - Fix bug in IV estimation with `lean = TRUE`.
+  
+  - Fix bug preventing the return of demeaned variables in IV estimations (thanks to @amarbler [#94](https://github.com/lrberge/fixest/issues/94)).
+
+## Other
+
+ - `i()` now automatically converts its first argument to numeric if it was of type logical. The user can still pass logicals to the argument `f2` if the expected behavior is really to treat it as a logical.
+ 
+ - Improve `fitstat` help and error messages.
+
+# fixest 0.8.1 (2021-01-13)
 
 ## Bugs
 
@@ -9,15 +858,16 @@
  
  - Fix rare bug when `i()` was called within a very specific set of functions.
  
- - Fix bug in R old release when due to `anyNA.data.frame`.
+ - Fix bug in R old release due to `anyNA.data.frame`.
  
  - Fix bug regarding `panel` data sets when variables were created in a `data.table` within functions (thanks to @tcovert [#76](https://github.com/lrberge/fixest/issues/76)).
  
- - Add extra elements to be removed when `lean = TRUE` to keep the object as small as possible.
+ - Add extra elements to be removed when `lean = TRUE` to keep the object as small as possible (reported by @
+zozotintin [#81](https://github.com/lrberge/fixest/issues/81)).
  
  - Fix bug in fixed-effects estimations with multiple LHS and different number of observations per estimation that prevented to get the default behavior for standard-errors to work.
  
- - Fix bug when using `split` and fixed-effects.
+ - Fix occasional bug when using `split` with fixed-effects.
  
  - `xpd` now appropriately returns a two sided formula when a one sided formula is fed in and the argument `lhs` is provided.
  
@@ -25,34 +875,35 @@
  
  - Fix occasional bug in the ordering of sub-selections of multiple estimations. 
  
-# Sun and Abraham (forthcoming, Journal of Econometrics) method for staggered DiD
+## Sun and Abraham method for staggered DiD
 
  - For staggered difference-in-difference analyzes: the method of Sun and Abraham (forthcoming, Journal of Econometrics) has been implemented. 
  
- - After having using `i()` to interact cohort dummies with time to treatment dummies, use the function `aggregate` to recover the yearly treatment effects.
+ - After having used `i()` to interact cohort dummies with time to treatment dummies, use the function `aggregate` to recover the yearly treatment effects.
  
  - So far the way to do it, although easy, is a bit arcane but the next versions of the software will include a user-friendly way. 
  
- - For detail, check out the help page of aggregate or the staggered DiD section in the vignette [fixest walkthrough](https://CRAN.R-project.org/package=fixest/vignettes/fixest_walkthrough.html).
+ - For details, check out the help page of the function `aggregate` or the staggered DiD section in the vignette [fixest walkthrough](https://CRAN.R-project.org/package=fixest/vignettes/fixest_walkthrough.html).
  
-# New features
+## New features
 
- - Function `i()` now has the new arguments `f2`, `drop2` and `keep2` which allows the interaction of two factors.
+ - Function `i()` now has the new arguments `f2`, `drop2` and `keep2` which allows the interaction of two factors (useful for staggered DiD estimations).
  
  - Argument `dof`, used to compute the standard-errors, can now be used at estimation time.
  
- - In `etable`, the argument `digits` can now accepts a character value specifying the way the decimals should be displayed. For example if `digits = "r2"` this means that all numbers will be rounded at two decimals and these two decimals will always be displayed. The default behavior is to display significant digits. Follows feature request [#82](https://github.com/lrberge/fixest/issues/82).
+ - In `etable`, the argument `digits` can now accepts a character value specifying the way the decimals should be displayed. For example if `digits = "r2"` this means that all numbers will be rounded at two decimals and these two decimals will always be displayed. The default behavior is to display significant digits. Follows feature request [#82](https://github.com/lrberge/fixest/issues/82) by @lyifa.
  
  - `etable` also gains the argument `digits.stats` which monitors how the fit statistics decimals should be displayed.
  
  - Argument `split` now accepts variable names.
  
 
-# Other
+## Other
 
-  - More coherence regarding the use of `summary` applied to models for which the SEs were computed at estimation time. Now there is a memory of how the SEs were computed, so that, for example, if only the argument `dof` is passed to `summary`, then the SEs will be clustered in the same way as estimation time but and only `dof` will change.
+  - More coherence regarding the use of `summary` applied to models for which the SEs were computed at estimation time. Now there is a memory of how the SEs were computed, so that, for example, if only the argument `dof` is passed to `summary`, then the SEs will be clustered in the same way as estimation time and only `dof` will change.
   
-  - Now an error is raised when `i()` is used in the fixed-effects part of the formula. The appropriate way is indicated (related to [#77](https://github.com/lrberge/fixest/issues/77)).
+  - Now an error is raised when `i()` is used in the fixed-effects part of the formula. The appropriate way is indicated (related to [#77](https://github.com/lrberge/fixest/issues/77) by 
+@rrichmond).
   
   - Improved default setting of standard-errors.
   

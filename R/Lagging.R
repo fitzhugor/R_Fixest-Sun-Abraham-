@@ -14,7 +14,8 @@
 .datatable.aware = TRUE
 
 
-panel_setup = function(data, panel.id, time.step = NULL, duplicate.method = "none", DATA_MISSING = FALSE, from_fixest = FALSE){
+panel_setup = function(data, panel.id, time.step = NULL, duplicate.method = "none",
+                       DATA_MISSING = FALSE, from_fixest = FALSE){
     # Function to setup the panel.
     # Used in lag.formula, panel, and fixest_env (with argument panel.id and panel.args)
     # DATA_MISSING: arg used in lag.formula
@@ -286,7 +287,7 @@ l = function(x, lag = 1, fill = NA){
 
     # To improve => you don't wanna check all frames, only the relevant ones
     from_fixest = FALSE
-    for(where in 1:min(6, sys.nframe())){
+    for(where in 1:min(22, sys.nframe())){
         if(exists("panel__meta__info", parent.frame(where))){
             from_fixest = TRUE
             meta_info = get("panel__meta__info", parent.frame(where))
@@ -567,7 +568,8 @@ d__expand = function(x, k = 1, fill){
 #'
 #'
 #'
-lag.formula = function(x, k = 1, data, time.step = NULL, fill = NA, duplicate.method = c("none", "first"), ...){
+lag.formula = function(x, k = 1, data, time.step = NULL, fill = NA,
+                       duplicate.method = c("none", "first"), ...){
     # Arguments:
     # time.step: default: "consecutive", other option: "unitary" (where you find the most common step and use it -- if the data is numeric), other option: a number, of course the time must be numeric
 
@@ -604,7 +606,8 @@ lag.formula = function(x, k = 1, data, time.step = NULL, fill = NA, duplicate.me
     vars = all.vars(x)
     qui_pblm = setdiff(vars, existing_vars)
     if(length(qui_pblm) > 0){
-        stop("In the formula the variable", enumerate_items(qui_pblm, "s.is.quote"), " not in the ", ifelse(DATA_MISSING, "environment. Add argument data?", "data."))
+        stop("In the formula the variable", enumerate_items(qui_pblm, "s.is.quote"),
+             " not in the ", ifelse(DATA_MISSING, "environment. Add argument data?", "data."))
     }
 
 
@@ -629,7 +632,8 @@ lag.formula = function(x, k = 1, data, time.step = NULL, fill = NA, duplicate.me
         # I could go further in checking but it's enough
     }
 
-    meta_info = panel_setup(data, panel.id = x, time.step = time.step, duplicate.method = duplicate.method, DATA_MISSING = DATA_MISSING)
+    meta_info = panel_setup(data, panel.id = x, time.step = time.step,
+                            duplicate.method = duplicate.method, DATA_MISSING = DATA_MISSING)
 
     # we get the observation id!
     obs_lagged = cpp_lag_obs(id = meta_info$id_sorted, time = meta_info$time_sorted, nlag = k)
@@ -657,6 +661,9 @@ lag.formula = function(x, k = 1, data, time.step = NULL, fill = NA, duplicate.me
 
     res
 }
+
+#' @describeIn lag.formula Lags a variable using a formula syntax
+lag_fml = lag.formula
 
 
 
@@ -733,7 +740,8 @@ panel = function(data, panel.id, time.step = NULL, duplicate.method = c("none", 
 
     mc = match.call()
 
-    meta_info = panel_setup(data, panel.id = panel.id, time.step = time.step, duplicate.method = duplicate.method)
+    meta_info = panel_setup(data, panel.id = panel.id, time.step = time.step,
+                            duplicate.method = duplicate.method)
     meta_info$call = mc
 
     # R makes a shallow copy of data => need to do it differently with DT
@@ -951,7 +959,10 @@ unpanel = function(x){
         order_it = order(id, time)
         order_inv = order(order_it)
 
-        new_info = list(order_it = order_it, order_inv=order_inv, id_sorted=id[order_it], time_sorted=time[order_it], na_flag = na_flag, panel.id = info$panel.id, call = info$call)
+        new_info = list(order_it = order_it, order_inv=order_inv,
+                        id_sorted=id[order_it], time_sorted=time[order_it],
+                        na_flag = na_flag, panel.id = info$panel.id, call = info$call)
+
         if(na_flag) new_info$is_na = is_na
         attr(res, "panel_info") = new_info
     }
@@ -963,22 +974,47 @@ unpanel = function(x){
     return(res)
 }
 
-terms_hat = function(fml, fastCombine = TRUE){
+terms_hat = function(fml, fastCombine = TRUE, n_unik = FALSE){
 
-    fml_char = as.character(fml[length(fml)])
-    changeNames = FALSE
+    fml_char = as.character(fml)[length(fml)]
+
+    # %^%: hat operator, in n_unik
+    # + distribution
+    if(n_unik){
+
+        any_hat = grepl("^", fml_char, fixed = TRUE)
+        if(any_hat){
+            fml_char = gsub("%^%", "*", fml_char, fixed = TRUE)
+            fml_char = gsub("\\^(?=[^[:digit:]])", ":", fml_char, perl = TRUE)
+        }
+
+        vars = get_vars(.xpd(rhs = fml_char))
+
+        # distribution:
+        #   (a + b)[cond] => a[cond] + b[cond]
+        is_paren = grepl("^\\(", vars)
+        while(any(is_paren)){
+
+            i = which(is_paren)[1]
+            info_paren = extract_fun(paste0("PAREN", vars[i]), "PAREN")
+            vars_in_paren = get_vars(.xpd(rhs = gsub("^PAREN\\(|\\)$", "", info_paren$fun)))
+
+            new_vars = paste0(vars_in_paren, info_paren$after)
+
+            vars = insert(vars[-i], new_vars, i)
+            is_paren = grepl("^\\(", vars)
+        }
+
+        vars = gsub(":", "^", vars, fixed = TRUE)
+
+        fml = .xpd(rhs = vars)
+        fml_char = as.character(fml)[length(fml)]
+    }
+
+
     if(grepl("^", fml_char, fixed = TRUE)){
         # special indicator to combine factors
-
-        fun2combine = ifelse(fastCombine, "combine_clusters_fast", "combine_clusters")
-
-        fml_char_new = gsub("([[:alpha:]\\.][[:alnum:]_\\.]*(\\^[[:alpha:]\\.][[:alnum:]_\\.]*)+)",
-                            paste0(fun2combine, "(\\1)"),
-                            fml_char)
-
-        fml_char_new = gsub("([[:alpha:]\\.][[:alnum:]_\\.]*)\\^([[:alpha:]\\.][[:alnum:]_\\.]*)", "\\1, \\2", fml_char_new)
-        fml = as.formula(paste0("~", fml_char_new))
-        changeNames = TRUE
+        fml = fml_combine(fml_char, fastCombine)
     }
 
     t = terms(fml)
@@ -1130,6 +1166,55 @@ expand_lags = function(fml){
 
     as.formula(paste0(lhs_fml, "~", rhs_fml, fixef_fml, iv_fml))
 }
+
+
+
+set_panel_meta_info = function(object, newdata){
+    # We set the variable panel__meta__info with the current data set
+
+    panel__meta__info = NULL
+
+    fml_full = formula(object, type = "full")
+    if(check_lag(fml_full)){
+        if(!is.null(object$panel.info)){
+            if(is.null(attr(newdata, "panel_info"))){
+                # We try to recreate the panel
+                if(any(!names(object$panel.info) %in% c("", "data", "panel.id"))){
+                    # This was NOT a standard panel creation
+                    stop("The estimation contained lags/leads and the original data was a 'fixest_panel' while the new data is not. Please set the new data as a panel first with the function panel(). NOTA: the original call to panel was:\n", deparse_long(object$panel.info))
+                } else {
+                    panel__meta__info = panel_setup(newdata, object$panel.id, from_fixest = TRUE)
+                }
+            } else {
+                panel__meta__info = attr(newdata, "panel_info")
+            }
+        } else {
+            panel__meta__info = panel_setup(newdata, object$panel.id, from_fixest = TRUE)
+        }
+    }
+
+    panel__meta__info
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

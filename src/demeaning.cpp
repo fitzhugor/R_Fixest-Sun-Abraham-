@@ -110,17 +110,21 @@ int pending_interrupt() {
 // Later I may use the number of observations
 // I don't at the moment because everything is strongly checked beforehand
 class sVec{
-    bool is_int = false;
     double *p_dble = nullptr;
     int *p_int = nullptr;
 
 public:
     // several constructors
+
+    // is_int public member
+    bool is_int = false;
+
     sVec(){};
     sVec(SEXP);
-    sVec(double *p_x): is_int(false), p_dble(p_x){};
-    sVec(int *p_x): is_int(true), p_int(p_x){};
+    sVec(double *p_x): p_dble(p_x), is_int(false){};
+    sVec(int *p_x): p_int(p_x), is_int(true){};
     sVec(std::nullptr_t){};
+
 
     double operator[](int i){
         if(is_int) return static_cast<double>(p_int[i]);
@@ -901,11 +905,15 @@ void FEClass::compute_fe_coef_2_internal(double *fe_coef_in_out_C, double *fe_co
         for(int c=0 ; c<nb_id_b ; ++c){
             // We backward solve
             for(int v=V_b - 1 ; v>=0 ; --v){
-                val = rhs_b(c, v);
-                for(int v_done=v + 1 ; v_done<V_b ; ++v_done){
-                    val -= rhs_b(c, v_done) * my_system_b(c, v, v_done);
+                if(my_system_b(c, v, v) == 0){
+                    rhs_b(c, v) = 0;
+                } else {
+                    val = rhs_b(c, v);
+                    for(int v_done=v + 1 ; v_done<V_b ; ++v_done){
+                        val -= rhs_b(c, v_done) * my_system_b(c, v, v_done);
+                    }
+                    rhs_b(c, v) = val / my_system_b(c, v, v);
                 }
-                rhs_b(c, v) = val / my_system_b(c, v, v);
             }
         }
     }
@@ -924,11 +932,23 @@ void FEClass::compute_fe_coef_2(double *fe_coef_in_C, double *fe_coef_out_C, dou
 
     compute_fe_coef_2_internal(fe_coef_in_C, fe_coef_tmp, in_out_C);
 
+    // Rcout << "Coefs IN:\nFirst dim: ";
+    // for(int i=0 ; i<nb_coef_Q[0] ; ++i){
+    //     Rcout << fe_coef_in_C[i] << ", ";
+    // }
+    // Rcout << "\n";
+
     //
     // Step 2: Updating a
     //
 
     compute_fe_coef_2_internal(fe_coef_out_C, fe_coef_tmp, in_out_C, true);
+
+    // Rcout << "Coefs OUT:\nFirst dim: ";
+    // for(int i=0 ; i<nb_coef_Q[0] ; ++i){
+    //     Rcout << fe_coef_out_C[i] << ", ";
+    // }
+    // Rcout << "\n";
 
 }
 
@@ -1780,7 +1800,7 @@ List cpp_demean(SEXP y, SEXP X_raw, SEXP r_weights, int iterMax, double diffMax,
                    SEXP fe_id_list, SEXP table_id_I, SEXP slope_flag_Q, SEXP slope_vars_list,
                    SEXP r_init, int nthreads, bool save_fixef = false){
     // main fun that calls demean_single
-    // preformat all the information needed on the clusters
+    // preformats all the information needed on the fixed-effects
     // y: the dependent variable
     // X_raw: the matrix of the explanatory variables -- can be "empty"
 
@@ -2071,7 +2091,12 @@ List cpp_which_na_inf(SEXP x, int nthreads){
     for(int t=0 ; t<nthreads ; ++t){
         for(int k=0 ; k<K ; ++k){
             for(int i=bounds[t]; i<bounds[t + 1] && !anyNAInf ; ++i){
-                if(std::isnan(mat(i, k)) || std::isinf(mat(i, k))){
+
+                if(mat[k].is_int){
+                    if(mat(i, k) == -2147483648.0){
+                        anyNAInf = true;
+                    }
+                } else if(std::isnan(mat(i, k)) || std::isinf(mat(i, k))){
                     anyNAInf = true;
                 }
             }
@@ -2087,7 +2112,13 @@ List cpp_which_na_inf(SEXP x, int nthreads){
             double x_tmp = 0;
             for(int k=0 ; k<K ; ++k){
                 x_tmp = mat(i, k);
-                if(std::isnan(x_tmp)){
+                if(mat[k].is_int){
+                    if(mat(i, k) == -2147483648.0){
+                        is_na_inf[i] = true;
+                        any_na = true;
+                        break;
+                    }
+                } else if(std::isnan(x_tmp)){
                     is_na_inf[i] = true;
                     any_na = true;
                     break;
